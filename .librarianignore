@@ -1,0 +1,129 @@
+# Librarian Ignore File
+# Files and directories listed here will NOT be indexed, searched, or accessed
+# Uses gitignore-style patterns
+
+# Security and credentials
+.env
+*.env
+.env.*
+credentials.*
+*.key
+*.pem
+id_rsa
+id_ed25519
+*.secrets
+*.creds
+
+# Version control
+.git/
+.gitignore
+.svn/
+.hg/
+
+# Dependencies and packages
+venv/
+virtualenv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+node_modules/
+npm_modules/
+vendor/
+bundle/
+
+# Build artifacts and output
+dist/
+build/
+target/
+out/
+output/
+*.egg-info/
+.eggs/
+*.egg
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-*
+
+# Testing and coverage
+.coverage
+.pytest_cache/
+.tox/
+.nox/
+htmlcov/
+*.cover
+.hypothesis/
+
+# Documentation build
+docs/_build/
+site/
+
+# Database and data files
+*.db
+*.sqlite
+*.sqlite3
+chroma_db/  # ChromaDB data directory - don't index the DB itself
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+logs/
+tmp/
+temp/
+.cache/
+
+# Compressed and binary files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+*.iso
+*.img
+*.bin
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Large media files
+*.mp4
+*.avi
+*.mov
+*.mp3
+*.wav
+*.flac
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.pdf
+*.psd
+
+# Metadata and librarian files
+metadata/
+.librarianignore
+.chromium/
+
+# OS-specific
+.DS_Store
+.Trash-*
+.nfs*
+.AppleDouble
+.LSOverride
+
+# Project-specific (add your own below)
+# node_modules/
+# .vscode/
+# build/
+# dist/
