@@ -73,10 +73,11 @@ def is_safe_path(path: str, safe_dir: str) -> tuple[bool, str]:
         return False, f"Invalid path: {e}"
 
 
-def truncate_output(text: str) -> str:
+def truncate_output(text: str, limit: int = None) -> str:
     """Truncate output to protect LLM context window."""
-    if len(text) > MAX_OUTPUT_CHARS:
-        return text[:MAX_OUTPUT_CHARS] + f"\n[output truncated — exceeded {MAX_OUTPUT_CHARS} chars]"
+    max_chars = limit if limit is not None else MAX_OUTPUT_CHARS
+    if len(text) > max_chars:
+        return text[:max_chars] + f"\n[output truncated — exceeded {max_chars} chars]"
     return text
 
 
@@ -146,15 +147,34 @@ def register_cli_tools(mcp, safe_dir: str):
             return f"[error]\nExecution failed: {str(e)}"
 
     @mcp.tool()
-    def read_document(path: str) -> str:
+    def read_document(path: str, start_line: int = None, end_line: int = None,
+                     head: int = None, tail: int = None, max_chars: int = None) -> str:
         """
-        Read the full contents of a document inside the allowed directory.
+        Read contents of a document inside the allowed directory.
+
+        Supports reading entire file or specific portions:
+        - Line ranges: start_line=1, end_line=10
+        - First N lines: head=20
+        - Last N lines: tail=20
+        - Custom max size: max_chars=20000
 
         Args:
             path: Absolute or relative path to the document
+            start_line: Starting line number (1-based, inclusive)
+            end_line: Ending line number (1-based, inclusive)
+            head: Read first N lines (overrides start_line/end_line)
+            tail: Read last N lines (overrides start_line/end_line)
+            max_chars: Maximum characters to return (default: 8000)
 
         Returns:
-            Full document contents or error message
+            Document contents or error message
+
+        Examples:
+            read_document("/path/to/file.txt")           # Entire file (up to 8000 chars)
+            read_document("/path/to/file.txt", head=50)   # First 50 lines
+            read_document("/path/to/file.txt", tail=50)   # Last 50 lines
+            read_document("/path/to/file.txt", start_line=100, end_line=150)  # Lines 100-150
+            read_document("/path/to/file.txt", max_chars=20000)  # Up to 20000 chars
         """
         safe, resolved = is_safe_path(path, SAFE_WORKING_DIR)
         if not safe:
@@ -169,8 +189,39 @@ def register_cli_tools(mcp, safe_dir: str):
 
         try:
             with open(resolved, 'r', encoding='utf-8', errors='replace') as f:
-                contents = f.read()
-            return truncate_output(f"[file: {resolved}]\n\n{contents}")
+                lines = f.readlines()
+
+            # Determine which lines to read
+            if head is not None:
+                # Read first N lines
+                selected_lines = lines[:head]
+                range_info = f"(first {head} lines)"
+            elif tail is not None:
+                # Read last N lines
+                selected_lines = lines[-tail:] if tail > 0 else []
+                range_info = f"(last {tail} lines)"
+            elif start_line is not None or end_line is not None:
+                # Read line range
+                start = start_line if start_line is not None else 1
+                end = end_line if end_line is not None else len(lines)
+                # Convert to 0-based indexing
+                selected_lines = lines[start-1:end]
+                range_info = f"(lines {start}-{end})"
+            else:
+                # Read entire file
+                selected_lines = lines
+                range_info = f"(all {len(lines)} lines)"
+
+            # Join lines
+            contents = ''.join(selected_lines)
+
+            # Apply max_chars limit if specified (higher limit for partial reads)
+            limit = max_chars if max_chars is not None else MAX_OUTPUT_CHARS
+            if len(contents) > limit:
+                contents = contents[:limit] + f"\n[output truncated — exceeded {limit} chars]"
+
+            return f"[file: {resolved} {range_info}]\n\n{contents}"
+
         except Exception as e:
             return f"[error]\nCould not read file: {e}"
 
