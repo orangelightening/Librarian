@@ -127,3 +127,6 @@ metadata/
 # .vscode/
 # build/
 # dist/
+
+# Architectural recommendation documents (outdated)
+*-reco.md

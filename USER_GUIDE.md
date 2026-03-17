@@ -283,7 +283,8 @@ To use the Librarian, you need to configure your MCP client (Jan, LM Studio, Cla
         "/home/peter/development/librarian-mcp"
       ],
       "env": {
-        "PYTHONPATH": "/home/peter/development/librarian-mcp"
+        "PYTHONPATH": "/home/peter/development/librarian-mcp",
+        "LIBRARIAN_BACKEND": "chonkie"
       }
     }
   }
@@ -302,7 +303,8 @@ To use the Librarian, you need to configure your MCP client (Jan, LM Studio, Cla
         "/home/peter/development/librarian-mcp"
       ],
       "env": {
-        "PYTHONPATH": "/home/peter/development/librarian-mcp"
+        "PYTHONPATH": "/home/peter/development/librarian-mcp",
+        "LIBRARIAN_BACKEND": "chonkie"
       }
     }
   }
@@ -321,12 +323,19 @@ To use the Librarian, you need to configure your MCP client (Jan, LM Studio, Cla
         "/home/peter/development/librarian-mcp"
       ],
       "env": {
-        "PYTHONPATH": "/home/peter/development/librarian-mcp"
+        "PYTHONPATH": "/home/peter/development/librarian-mcp",
+        "LIBRARIAN_BACKEND": "chonkie"
       }
     }
   }
 }
 ```
+
+> **💡 Note**: `LIBRARIAN_BACKEND` can be set to:
+> - `"chonkie"` - Intelligent semantic chunking (recommended, default)
+> - `"chroma"` - Original fixed-size chunking
+>
+> See [CHONKIE_MIGRATION.md](CHONKIE_MIGRATION.md) for details on backend differences.
 
 ### Configuration Options
 

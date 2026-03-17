@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "librarian": {
+      "command": "/home/peter/development/librarian-mcp/venv/bin/python",
+      "args": [
+        "/home/peter/development/librarian-mcp/mcp_server/librarian_mcp.py",
+        "--safe-dir",
+        "/home/peter/development/librarian-mcp"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/peter/development/librarian-mcp",
+        "LIBRARIAN_BACKEND": "chonkie"
+      }
+    }
+  }
+}
