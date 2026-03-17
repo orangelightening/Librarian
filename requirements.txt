@@ -6,5 +6,5 @@ fastmcp
 # Vector Database (ChromaDB)
 chromadb>=0.4.0
 
-# Phase 2: Chonkie Integration
-# chonkie-sdk  # Uncomment when implementing Phase 2
+# Phase 2: Chonkie Integration (intelligent chunking)
+chonkie[all]>=1.6.0  # Includes all optional dependencies for full functionality

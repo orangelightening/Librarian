@@ -55,10 +55,15 @@ mkdir -p "$METADATA_PATH"
 if [ -d "${SCRIPT_DIR}/venv" ]; then
     echo "Activating virtual environment..."
     source "${SCRIPT_DIR}/venv/bin/activate"
+    PYTHON_CMD="${SCRIPT_DIR}/venv/bin/python"
 else
     echo "Warning: Virtual environment not found at ${SCRIPT_DIR}/venv"
     echo "Create one with: python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
+    exit 1
 fi
+
+# Set PYTHONPATH to include project root
+export PYTHONPATH="${SCRIPT_DIR}:$PYTHONPATH"
 
 # Start the MCP server
 echo "Starting Librarian MCP Server..."
@@ -68,7 +73,7 @@ echo "  ChromaDB: ${CHROMA_PATH}"
 echo "  Metadata: ${METADATA_PATH}"
 echo ""
 
-python "${SCRIPT_DIR}/mcp_server/librarian_mcp.py" \
+"${PYTHON_CMD}" "${SCRIPT_DIR}/mcp_server/librarian_mcp.py" \
     --safe-dir "${SAFE_DIR}" \
     --documents-dir "${DOCUMENTS_DIR}" \
     --chroma-path "${CHROMA_PATH}" \

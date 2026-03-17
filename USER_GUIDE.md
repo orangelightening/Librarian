@@ -13,7 +13,259 @@ The Librarian is an AI assistant that helps you search and organize your documen
 
 ---
 
-## MCP Client Configuration
+## Model Requirements & Performance Expectations
+
+**⚠️ IMPORTANT: The Librarian's performance depends heavily on the AI model you use with it.**
+
+### What Makes a Good Model for the Librarian?
+
+The Librarian is an MCP server that provides tools to an AI model. The model must be:
+- **Tool-capable**: Able to understand and use function calling/tool use
+- **Good at reasoning**: Can chain multiple tool calls together
+- **Strong at synthesis**: Can combine information from multiple sources
+- **Nuanced understanding**: Can provide analysis, not just extract facts
+
+### Model Performance Tiers
+
+**🔴 Entry-Level Models (7B-9B parameters)**
+- **Examples**: Qwen3.5 9B, Llama 3.1 8B
+- **Performance**: Barely adequate
+- **Behavior**:
+  - May only perform 1-2 tool calls per query
+  - Limited ability to synthesize complex information
+  - Responses are factual but lack depth
+  - May miss connections between documents
+- **Hardware**: Can run on modest GPUs with 4-bit quantization
+- **Best for**: Simple factual queries, single-document lookups
+
+**🟡 Mid-Range Models (14B-27B parameters)**
+- **Examples**: Qwen3.5 14B, Llama 3.1 70B (quantized), Mixtral 8x7B
+- **Performance**: Good to very good
+- **Behavior**:
+  - Will perform 3-5 tool calls per query
+  - Better at synthesizing information from multiple sources
+  - Can provide nuanced analysis and connections
+  - More thorough exploration of related topics
+- **Hardware**: Requires capable GPU (12GB+ VRAM) or CPU with good RAM
+- **Best for**: Research, multi-document queries, complex analysis
+
+**🟢 High-End Models (30B+ parameters or Cloud APIs)**
+- **Examples**: GLM-4.7, Claude, GPT-4, DeepSeek
+- **Performance**: Excellent
+- **Behavior**:
+  - Extensive tool use (5+ calls per query)
+  - Sophisticated synthesis and analysis
+  - Understands context and nuance deeply
+  - Proactive in exploring related information
+  - Exceptional citation and source attribution
+- **Hardware**: Cloud API or high-end local hardware
+- **Best for**: Complex research, comprehensive analysis, professional work
+
+### Real-World Performance Comparison
+
+**Test Query**: "What acts as the system 'front end'?"
+
+**GLM-4.7 (High-End Cloud Model)**: ✅ **CORRECT ANSWER**
+- ✅ Performed 3 searches to explore different aspects
+- ✅ Read multiple files for context
+- ✅ Provided nuanced, accurate response with proper citations
+- ✅ Synthesized information from architecture, features, and documentation
+- ✅ **Key insight**: Correctly identified that MCP clients (Jan, LM Studio) are the actual front end, not the server itself
+- ✅ Found the design decision: "MCP-First: No FastAPI/Gradio - pure MCP server"
+- ✅ Explained historical context (old librarian project vs. current MCP architecture)
+
+**Qwen3.5 9B 4-bit (Entry-Level Local Model)**: ❌ **WRONG ANSWER**
+- ⚠️ Performed only 1 search
+- ⚠️ Minimal file reading
+- ⚠️ Response was confident but **fundamentally incorrect**
+- ⚠️ Limited depth and synthesis
+- ❌ **Incorrectly stated**: `librarian_mcp.py` is the "front end"
+- ❌ **Missed**: The MCP architecture uses external clients as the front end
+- ❌ **Assumption**: "main entry point" = "front end" without understanding architectural context
+
+**The Critical Difference**:
+- Qwen found a file, made a reasonable-sounding assumption, and gave a **wrong answer confidently**
+- GLM-4.7 researched the architectural decisions, found explicit documentation, and gave a **nuanced, correct answer**
+
+**This Matters Because**:
+- Wrong answers waste time and mislead users
+- The librarian's value depends on accurate information retrieval
+- Smaller models may confidently state incorrect information
+- Complex queries require models that can understand context and architecture
+
+### Hardware Recommendations
+
+**For Local Models:**
+- **GPU**: NVIDIA GPU with 12GB+ VRAM recommended for 14B+ models
+- **System RAM**: 32GB+ if running on CPU
+- **Quantization**: 4-bit or 8-bit quantization essential for larger models
+- **Model Size**: 27B+ recommended for optimal librarian performance
+
+**For Cloud Models:**
+- Any tool-capable model (Claude, GPT-4, GLM, etc.) will perform excellently
+- No special hardware requirements
+- Better performance but requires internet connection
+
+### Critical Requirements
+
+**✅ The Model MUST Be:**
+1. **Tool-capable**: Must support function calling or tool use
+2. **Trained on instructions**: Instruction-tuned models perform better
+3. **Able to follow context**: Must maintain conversation context
+
+**❌ These Will NOT Work Well:**
+- Base models (not instruction-tuned)
+- Models without tool-use capabilities
+- Very small models (< 7B parameters)
+- Models trained only for completion (not instructions)
+
+### Getting Best Performance
+
+**For Local Use:**
+```
+Recommended: Qwen3.5 14B or larger (quantized)
+Hardware: GPU with 12GB+ VRAM
+Alternative: Cloud API for best performance
+```
+
+**For Cloud Use:**
+```
+Any of: Claude, GPT-4, GLM-4, DeepSeek
+Performance: Excellent regardless of specific model
+```
+
+### Bottom Line
+
+The Librarian MCP server works with any tool-capable model, but **the model you choose dramatically affects the quality of results**.
+
+- **Testing/evaluation**: Start with a 9B model to see if it meets your needs
+- **Serious use**: Upgrade to 14B+ or use a cloud API
+- **Professional work**: Use high-end cloud models for best results
+
+The MCP server and library are the same regardless of model - only the model's ability to use tools effectively changes.
+
+---
+
+## Quick Start (Recommended Method)
+
+**⚠️ IMPORTANT**: This quick start method requires basic technical knowledge (command line, file editing). For easier installation, see "Docker Installation (Phase 2)" below.
+
+### Step 1: Clone and Install
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/librarian-mcp.git
+cd librarian-mcp
+
+# Create virtual environment and install dependencies
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Step 2: Start the Server
+
+```bash
+# Start the MCP server (easy method!)
+./setup_mcp.sh
+```
+
+That's it! The server is now running and ready to connect to your MCP client.
+
+### Step 3: Configure Your MCP Client
+
+Add this to your MCP client's configuration (Jan, LM Studio, etc.):
+
+**For Jan/LM Studio:**
+```json
+{
+  "mcpServers": {
+    "librarian": {
+      "command": "/home/peter/development/librarian-mcp/venv/bin/python",
+      "args": [
+        "/home/peter/development/librarian-mcp/mcp_server/librarian_mcp.py",
+        "--safe-dir",
+        "/home/peter/development/librarian-mcp"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/peter/development/librarian-mcp"
+      }
+    }
+  }
+}
+```
+
+### Step 4: Add Documents (Through Your MCP Client)
+
+Once your client is connected, use the Librarian's tools:
+
+```
+"Sync the directory ~/Documents to the library"
+"Add the file readme.md to the library"
+"List all indexed documents"
+```
+
+No need to run manual scripts - the Librarian handles everything through the MCP interface!
+
+### Step 5: Start Searching
+
+```
+"What do my documents say about architecture?"
+"Find information about error handling"
+"Search for security best practices"
+```
+
+---
+
+## Installation Time Estimate
+
+- **Tech-savvy users**: ~15-20 minutes
+- **Comfortable with command line**: ~20-30 minutes
+- **New to command line**: May require additional learning time
+
+**Need something easier?** Docker installation (Phase 2) will be much simpler: `git clone && docker compose up -d`
+
+---
+
+## Docker Installation (Coming in Phase 2)
+
+**Goal**: Make installation accessible to non-technical users
+
+**Planned workflow**:
+```bash
+git clone https://github.com/yourusername/librarian-mcp.git
+cd librarian-mcp
+docker compose up -d
+```
+
+That's it - no virtual environment, no Python installation, no manual configuration.
+
+**What this will provide**:
+- Pre-configured container with all dependencies
+- Automatic startup on system boot
+- Easy web-based configuration interface
+- One-command updates
+- Cross-platform compatibility (Linux, Mac, Windows)
+
+**Status**: Planned for Phase 2. Current installation requires command line comfort.
+
+---
+
+## Advanced Configuration
+
+The `setup_mcp.sh` script handles most configuration automatically, but you can customize:
+
+```bash
+./setup_mcp.sh --safe-dir ~/Documents              # Limit access to specific directory
+./setup_mcp.sh --documents-dir ~/my-library        # Custom document storage
+./setup_mcp.sh --chroma-path ~/custom-chroma       # Custom database location
+```
+
+For manual configuration or advanced setup, see the "MCP Client Configuration" section below.
+
+---
+
+## MCP Client Configuration (Advanced)
 
 To use the Librarian, you need to configure your MCP client (Jan, LM Studio, Claude Desktop, etc.) with the following settings.
 
@@ -131,43 +383,6 @@ If the server starts successfully, your configuration is correct!
 **PYTHONPATH is required:** The environment variable must be set so Python can find the mcp_server module.
 
 **Customizing paths:** You can change `--safe-dir` to limit where the librarian can access (e.g., `~/Documents` instead of the entire project).
-
----
-
-## Quick Start
-
-### 1. Start the Server
-
-```bash
-cd /home/peter/development/librarian-mcp
-./setup_mcp.sh
-```
-
-The server is now running and ready to help!
-
-### 2. Add Your Documents
-
-```bash
-# Add all markdown files from a directory
-python scripts/ingest.py --path ~/Documents --extensions .md
-
-# Add specific file types
-python scripts/ingest.py --path ~/project --extensions .md,.txt,.py
-
-# Add everything
-python scripts/ingest.py --path ~/Documents
-```
-
-### 3. Use the Librarian
-
-In your AI chat interface (Jan, LM Studio, etc.), just ask:
-
-```
-"Search for information about project architecture"
-"What do my documents say about testing?"
-"Find all documents mentioning security"
-"List all documents in the library"
-```
 
 ---
 
@@ -289,6 +504,44 @@ You are the Librarian, an intelligent research assistant with access to a curate
 - list_documents(path, extension, recursive): List files
 - search_documents(query, path, extension): Search file contents
 - document_summary(path): Get file structure summary
+
+## ⚠️ CRITICAL: Handling Insufficient Data
+
+When NO relevant information is found:
+
+**ABSOLUTE REQUIREMENTS:**
+- ❌ DO NOT hallucinate, fabricate, or make up information
+- ❌ DO NOT generate fictional sources or citations
+- ❌ DO NOT fill in gaps with plausible-sounding but false information
+- ❌ DO NOT guess, speculate, or invent content
+
+**INSTEAD:**
+- ✅ Say clearly: "There is insufficient data in the library to answer this question"
+- ✅ Say: "I searched the library but found no relevant documents"
+- ✅ Say: "The library does not contain information about [topic]"
+- ✅ Suggest: "Would you like me to search the file system instead?"
+- ✅ Suggest: "Would you like me to help you add relevant documents to the library?"
+
+**REMEMBER:**
+- Your primary role is to work with EXISTING library content
+- When data is insufficient, say so clearly and directly
+- Never attempt to be helpful by inventing information
+- Accuracy and honesty are more important than providing an answer
+
+**This is NON-NEGOTIABLE:**
+- Insufficient data = No answer, not a fabricated answer
+- User trust depends on your honesty about what you don't know
+- Hallucination destroys credibility and breaks the system
+
+## What You Don't Do
+- ❌ Don't access files outside the allowed directory
+- ❌ Don't ignore .librarianignore exclusions
+- ❌ Don't attempt to execute commands beyond the whitelist
+- ❌ Don't fabricate citations or sources
+- ❌ Don't claim information is in the library when it's not
+- ❌ Don't bypass safety restrictions or security measures
+- ❌ Don't access sensitive files (credentials, keys, .env files)
+- ❌ DON'T EVER hallucinate or make up information when data is insufficient
 
 You are helpful, accurate, and respectful of boundaries.
 ```
