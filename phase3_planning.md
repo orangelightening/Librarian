@@ -401,13 +401,14 @@ if __name__ == "__main__":
 
 ### 3. Batch Query Runner via LM Studio HTTP API
 
-**Purpose**: Run validation queries via LM Studio HTTP API with MCP tool access
+**Purpose**: Run validation queries via LM Studio HTTP API with MCP tool access and system prompt
+
+**Working Solution**: System prompt injection + atomic operations
 
 **Implementation**:
 ```python
 # scripts/run_batch_validation.py
 import requests
-import json
 import os
 from dotenv import load_dotenv
 from pathlib import Path
@@ -424,6 +425,7 @@ class BatchQueryRunner:
         self.api_endpoint = os.getenv("LM_STUDIO_API_ENDPOINT", "http://localhost:1234/api/v1/chat")
         self.api_token = os.getenv("LM_STUDIO_API_TOKEN")
         self.model = os.getenv("LM_STUDIO_MODEL", "unsloth/qwen3.5-9b")
+        self.system_prompt = Path("prompt.md").read_text()  # Load librarian persona
 
         if not self.api_token:
             raise ValueError("LM_STUDIO_API_TOKEN not found in environment")
@@ -444,16 +446,17 @@ class BatchQueryRunner:
             "Content-Type": "application/json"
         }
 
-        # LM Studio API format (NOT standard OpenAI format)
+        # LM Studio API format with system prompt injection
         payload = {
             "model": self.model,
-            "input": query,  # Note: "input" not "messages"
+            "input": f"{self.system_prompt}\n\n{query}",  # System prompt + query
             "integrations": [
                 {
                     "type": "plugin",
                     "id": "mcp/librarian"
                 }
-            ]
+            ],
+            "store": false  # Atomic operation - no context carried over
         }
 
         try:
@@ -468,7 +471,6 @@ class BatchQueryRunner:
             result = response.json()
 
             # Extract content from LM Studio API response format
-            # Output is an array of message/tool_call objects
             content_parts = []
             tool_calls = []
 
@@ -532,13 +534,20 @@ if __name__ == "__main__":
     print(f"\nComplete: {len(results)} queries processed")
 ```
 
-**Deliverable**: `scripts/run_batch_validation.py` that executes queries via LM Studio API
+**Key Features**:
+- **System prompt injection**: Loads `prompt.md` and prepends to each query
+- **Atomic operations**: `store: false` ensures fresh 32k context per query
+- **MCP tool access**: `integrations` array enables librarian tools
+- **No cross-contamination**: Each query is independent
 
-**Key Differences from OpenAI Format**:
-- Endpoint: `/api/v1/chat` (not `/v1/chat/completions`)
+**LM Studio API Format**:
+- Endpoint: `/api/v1/chat`
+- Authentication: `Authorization: Bearer $LM_API_TOKEN`
 - Field: `input` (not `messages`)
-- Header: `Authorization: Bearer token` (not `BEARER`)
 - Required: `integrations` array for MCP tool access
+- Optional: `store: false` for atomic operations
+
+**Deliverable**: `scripts/run_batch_validation.py` that executes queries with proper system prompt
 
 ---
 
