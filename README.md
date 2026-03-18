@@ -129,75 +129,42 @@ The Librarian MCP Server turns AI models into research assistants who can:
 ### 1. Installation
 
 ```bash
-cd /home/peter/development/librarian-mcp
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+# Clone or download the repository
+cd librarian-mcp
+
+# Run the installation script (detects paths automatically)
+./install.sh
 ```
 
-### 2. Start the Server
+The install script will:
+- Create a virtual environment
+- Install all dependencies
+- **Output the correct configuration for your MCP client** with your actual paths
 
-```bash
-# Default: Chonkie backend with intelligent chunking
-./setup_mcp.sh
-```
+### 2. Configure Your MCP Client
 
-Or with custom paths:
+Copy the configuration from `./install.sh` output to your MCP client:
 
-```bash
-python mcp_server/librarian_mcp.py \
-  --safe-dir /home/peter/development \
-  --documents-dir ./documents \
-  --chroma-path ./chroma_db \
-  --metadata-path ./metadata
-```
+**Jan** (`~/.config/Jan/MCP/servers.json`)
+**LM Studio** (Settings → MCP Servers)
+**Claude Desktop** (Config → MCP Servers)
 
-### 3. Configure Your MCP Client
+The paths will be automatically correct for your system!
 
-**Jan** (`~/.config/Jan/MCP/servers.json`):
-```json
-{
-  "mcpServers": {
-    "librarian": {
-      "command": "/home/peter/development/librarian-mcp/venv/bin/python",
-      "args": [
-        "/home/peter/development/librarian-mcp/mcp_server/librarian_mcp.py",
-        "--safe-dir", "/home/peter/development"
-      ]
-    }
-  }
-}
-```
-
-**LM Studio** (Settings → MCP Servers):
-```json
-{
-  "mcpServers": {
-    "librarian": {
-      "command": "/home/peter/development/librarian-mcp/venv/bin/python",
-      "args": [
-        "/home/peter/development/librarian-mcp/mcp_server/librarian_mcp.py",
-        "--safe-dir", "/home/peter/development"
-      ]
-    }
-  }
-}
-```
-
-### 4. Add Your Documents
+### 3. Add Your Documents
 
 ```bash
 # Sync entire directory
-python scripts/ingest.py --path /home/peter/documents --extensions .md,.txt,.py
+python scripts/ingest.py --path /path/to/your/docs --extensions .md,.txt,.py
 
 # Add single document
-python scripts/ingest.py --path /home/peter/documents/README.md
+python scripts/ingest.py --path /path/to/doc.md
 
 # Non-recursive scan
-python scripts/ingest.py --path /home/peter/documents/current --no-recursive
+python scripts/ingest.py --path /path/to/docs --no-recursive
 ```
 
-### 5. Start Searching!
+### 4. Start Searching!
 
 In your AI chat:
 ```
@@ -569,10 +536,6 @@ We chose venv over Docker for good reasons:
 - [QUICKSTART.md](QUICKSTART.md) - Get started immediately
 - [library_validation.md](library_validation.md) - **Documentation validation test suite** (verify librarian accuracy)
 - [CLAUDE.md](CLAUDE.md) - Developer guidance
-- [PHASE2/](PHASE2/) - Phase 2 documentation (Chonkie integration)
-- [Tools.md](Tools.md) - Complete tool reference
-- [QUICKSTART.md](QUICKSTART.md) - Get started immediately
-- [CLAUDE.md](CLAUDE.md) - Developer guidance
 - [PHASE2/CHONKIE_INTEGRATION.md](PHASE2/CHONKIE_INTEGRATION.md) - Phase 2 details
 - [PHASE2/CHONKIE_MIGRATION.md](PHASE2/CHONKIE_MIGRATION.md) - Backend migration guide
 
@@ -607,12 +570,6 @@ limitations under the License.
 **Feature Requests**: See [phase3_planning.md](phase3_planning.md) for planned enhancements.
 
 **Questions**: The librarian itself is your best resource - it has complete access to all documentation!
-
----
-
-## License
-
-This project is provided as-is for educational and personal use.
 
 ---
 
