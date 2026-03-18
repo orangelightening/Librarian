@@ -10,9 +10,13 @@
 
 Phase 3 transforms the Librarian MCP Server from a single-user local tool into a multi-user networked service. This document outlines planned features, implementation approaches, and architectural decisions for Phase 3 development.
 
-**⚠️ Architecture Update**: Testing revealed that LM Studio's HTTP API does NOT expose MCP tools to the model. Phase 3A now requires **TWO HTTP layers**:
-1. **FastMCP HTTP Transport** - For MCP clients (Jan, LM Studio chat)
-2. **Direct HTTP API** - For validation scripts and automation (bypasses LM Studio API limitations)
+**✅ Architecture Confirmed**: LM Studio's HTTP API **DOES** expose MCP tools when using the correct format with authentication:
+- Endpoint: `http://localhost:1234/api/v1/chat`
+- Authentication: `Authorization: Bearer $LM_API_TOKEN`
+- Key: `integrations` array enables MCP tool access
+- Format: `input` field (not `messages`)
+
+**Tested and working**: Model successfully called `search_library` and `list_indexed_documents` via HTTP API with full MCP tool access.
 
 ## Core Objectives
 
@@ -115,37 +119,22 @@ Phase 3 transforms the Librarian MCP Server from a single-user local tool into a
 
 ## Phase 3A: Detailed Deliverables
 
-### Architecture Update: Dual HTTP Implementation
+### Architecture: Single HTTP Transport + LM Studio API
 
-**Critical Discovery**: LM Studio's HTTP API does NOT expose MCP tools to the model. The model only has built-in knowledge, not access to MCP tools like `search_library`, `sync_documents`, etc.
+**Tested and Confirmed**: LM Studio's HTTP API **DOES** expose MCP tools with correct authentication format.
 
-**Solution**: Implement **TWO HTTP layers**:
-
+**Simple Architecture**:
 ```
-┌─────────────────────────────────────────────────────────┐
-│                   Librarian HTTP Server                  │
-├─────────────────────────────────────────────────────────┤
-│                                                           │
-│  Layer 1: FastMCP HTTP Transport                        │
-│  ├── For MCP clients (Jan, LM Studio chat, Claude)      │
-│  ├── Exposes tools via MCP protocol over HTTP           │
-│  └── Tools: search_library, sync_documents, etc.        │
-│                                                           │
-│  Layer 2: Direct HTTP API (NEW!)                        │
-│  ├── For validation scripts and automation              │
-│  ├── REST endpoints that call tools directly            │
-│  └── No MCP protocol - pure HTTP requests               │
-│                                                           │
-└─────────────────────────────────────────────────────────┘
+Validation Script → LM Studio HTTP API (authenticated) → Model → MCP Tools ✅
 ```
 
-**Why Both Layers**:
-- **Layer 1** enables MCP clients to connect over HTTP instead of stdio
-- **Layer 2** enables automated validation scripts (bypassing LM Studio API limitations)
+**Two components**:
+1. **FastMCP HTTP Transport** - For MCP clients (Jan, LM Studio chat, Claude)
+2. **LM Studio HTTP API** - For validation scripts (authenticated, MCP tools enabled)
 
 ---
 
-### 1. FastMCP HTTP Transport (Layer 1)
+### 1. FastMCP HTTP Transport
 
 **Purpose**: Enable MCP clients to connect over HTTP
 
@@ -184,7 +173,7 @@ python mcp_server/librarian_mcp.py --transport http --host 0.0.0.0 --port 8000
 
 ---
 
-### 2. Direct HTTP API (Layer 2) - NEW!
+### 2. Parse `library_validation.md` Function
 
 **Purpose**: Enable validation scripts and automation tools to call librarian tools directly via HTTP
 
@@ -353,7 +342,7 @@ curl -X POST http://localhost:8001/search_library \
 
 ---
 
-### 3. Parse `library_validation.md` Function
+### 2. Parse `library_validation.md` Function
 
 **Implementation**:
 ```python
@@ -392,6 +381,168 @@ def parse_validation_md(filepath: str = "library_validation.md") -> List[Dict]:
             # Capture query content (code blocks)
             elif line.strip().startswith('Query:'):
                 current_query['query'] = line.split('Query:', 1)[1].strip()
+
+    if current_query:
+        queries.append(current_query)
+
+    return queries
+
+# CLI interface
+if __name__ == "__main__":
+    queries = parse_validation_md()
+    print(f"Found {len(queries)} validation queries")
+    for q in queries:
+        print(f"Query {q['number']}: {q['description']}")
+```
+
+**Deliverable**: `scripts/parse_validation.py` that extracts validation queries
+
+---
+
+### 3. Batch Query Runner via LM Studio HTTP API
+
+**Purpose**: Run validation queries via LM Studio HTTP API with MCP tool access
+
+**Implementation**:
+```python
+# scripts/run_batch_validation.py
+import requests
+import json
+import os
+from dotenv import load_dotenv
+from pathlib import Path
+from typing import List, Dict
+from parse_validation import parse_validation_md
+
+# Load environment variables
+load_dotenv()
+
+class BatchQueryRunner:
+    """Run validation queries via LM Studio HTTP API with MCP tool access"""
+
+    def __init__(self):
+        self.api_endpoint = os.getenv("LM_STUDIO_API_ENDPOINT", "http://localhost:1234/api/v1/chat")
+        self.api_token = os.getenv("LM_STUDIO_API_TOKEN")
+        self.model = os.getenv("LM_STUDIO_MODEL", "unsloth/qwen3.5-9b")
+
+        if not self.api_token:
+            raise ValueError("LM_STUDIO_API_TOKEN not found in environment")
+
+    def run_query(self, query: str, query_num: int) -> Dict:
+        """
+        Run a single validation query via LM Studio HTTP API.
+
+        Args:
+            query: The validation query text
+            query_num: Query number for tracking
+
+        Returns:
+            Dict with response metadata and content
+        """
+        headers = {
+            "Authorization": f"Bearer {self.api_token}",
+            "Content-Type": "application/json"
+        }
+
+        # LM Studio API format (NOT standard OpenAI format)
+        payload = {
+            "model": self.model,
+            "input": query,  # Note: "input" not "messages"
+            "integrations": [
+                {
+                    "type": "plugin",
+                    "id": "mcp/librarian"
+                }
+            ]
+        }
+
+        try:
+            response = requests.post(
+                self.api_endpoint,
+                headers=headers,
+                json=payload,
+                timeout=120  # 2 minute timeout
+            )
+            response.raise_for_status()
+
+            result = response.json()
+
+            # Extract content from LM Studio API response format
+            # Output is an array of message/tool_call objects
+            content_parts = []
+            tool_calls = []
+
+            for item in result.get('output', []):
+                if item.get('type') == 'message':
+                    content_parts.append(item.get('content', ''))
+                elif item.get('type') == 'tool_call':
+                    tool_calls.append({
+                        'tool': item.get('tool'),
+                        'arguments': item.get('arguments'),
+                        'output': item.get('output', '')
+                    })
+
+            formatted_content = '\n'.join(content_parts)
+
+            return {
+                'query_num': query_num,
+                'status': 'success',
+                'content': formatted_content,
+                'tool_calls': tool_calls,
+                'tokens_used': result.get('stats', {}).get('total_output_tokens', 0)
+            }
+
+        except Exception as e:
+            return {
+                'query_num': query_num,
+                'status': 'error',
+                'error': str(e)
+            }
+
+    def run_batch(self, queries: List[Dict]) -> List[Dict]:
+        """
+        Run all validation queries.
+
+        Args:
+            queries: List of query dicts from parse_validation_md()
+
+        Returns:
+            List of response dicts
+        """
+        results = []
+        total = len(queries)
+
+        for i, query_obj in enumerate(queries, 1):
+            print(f"[{i}/{total}] Running Query {query_obj['number']}: {query_obj['description']}")
+
+            result = self.run_query(query_obj['query'], query_obj['number'])
+            results.append(result)
+
+            status = "✓" if result['status'] == 'success' else "✗"
+            print(f"  {status} Query {query_obj['number']} complete")
+
+        return results
+
+# CLI interface
+if __name__ == "__main__":
+    queries = parse_validation_md()
+    runner = BatchQueryRunner()
+    results = runner.run_batch(queries)
+
+    print(f"\nComplete: {len(results)} queries processed")
+```
+
+**Deliverable**: `scripts/run_batch_validation.py` that executes queries via LM Studio API
+
+**Key Differences from OpenAI Format**:
+- Endpoint: `/api/v1/chat` (not `/v1/chat/completions`)
+- Field: `input` (not `messages`)
+- Header: `Authorization: Bearer token` (not `BEARER`)
+- Required: `integrations` array for MCP tool access
+
+---
+
+### 4. Response File Writer
 
     if current_query:
         queries.append(current_query)
@@ -1573,34 +1724,35 @@ ls -lt reports/validation_*/
 ### Phase 3A: HTTP Transport + Batch Validation (Quick Win)
 
 **Deliverables** (in order):
-1. ✅ FastMCP HTTP transport (Layer 1) - `mcp.run(transport="http")`
-2. ✅ Direct HTTP API (Layer 2) - FastAPI endpoints for tool access
-3. ✅ `parse_validation_md()` function - Extract queries from library_validation.md
-4. ✅ Batch query runner via Direct HTTP API - HTTP requests to librarian (NOT LM Studio)
-5. ✅ Response file writer - Organized output to `reports/validation_*/`
-6. ✅ Comparison report generator - Summary statistics and quality metrics
-7. ✅ Run script with progress output - One-command validation
+1. ✅ FastMCP HTTP transport - `mcp.run(transport="http")`
+2. ✅ `parse_validation_md()` function - Extract queries from library_validation.md
+3. ✅ Batch query runner via LM Studio HTTP API - Authenticated MCP tool access
+4. ✅ Response file writer - Organized output to `reports/validation_*/`
+5. ✅ Comparison report generator - Summary statistics and quality metrics
+6. ✅ Run script with progress output - One-command validation
 
 **Files to create**:
-- `mcp_server/http_api.py` - Direct HTTP API (FastAPI)
 - `scripts/parse_validation.py` - Query parser
-- `scripts/run_batch_validation.py` - Batch HTTP query runner (calls librarian API)
+- `scripts/run_batch_validation.py` - Batch LM Studio API runner (with MCP integration)
 - `scripts/write_responses.py` - Response file writer
 - `scripts/generate_report.py` - Report generator
 - `scripts/run_validation.sh` - Main validation script
 
 **Files to modify**:
-- `mcp_server/librarian_mcp.py` - Add HTTP transport + HTTP API startup
-- `requirements.txt` - Add FastAPI and uvicorn dependencies
+- `mcp_server/librarian_mcp.py` - Add HTTP transport support
+- `.env` - Add LM Studio API token (already exists, ignored)
 
-**Dependencies to add**:
+**Dependencies**:
+- `python-dotenv>=1.0.0` (already added)
+
+**Configuration (.env)**:
 ```
-fastapi>=0.104.0
-uvicorn[standard]>=0.24.0
-pydantic>=2.5.0
+LM_STUDIO_API_TOKEN=sk-lm-xxx:xxx
+LM_STUDIO_API_ENDPOINT=http://localhost:1234/api/v1/chat
+LM_STUDIO_MODEL=unsloth/qwen3.5-9b
 ```
 
-**Estimated effort**: 1-2 weeks (7 focused deliverables)
+**Estimated effort**: 1 week (6 focused deliverables, simpler architecture)
 
 ### Phase 3B: Authentication (Security)
 1. API key system
