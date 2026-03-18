@@ -10,6 +10,10 @@
 
 Phase 3 transforms the Librarian MCP Server from a single-user local tool into a multi-user networked service. This document outlines planned features, implementation approaches, and architectural decisions for Phase 3 development.
 
+**⚠️ Architecture Update**: Testing revealed that LM Studio's HTTP API does NOT expose MCP tools to the model. Phase 3A now requires **TWO HTTP layers**:
+1. **FastMCP HTTP Transport** - For MCP clients (Jan, LM Studio chat)
+2. **Direct HTTP API** - For validation scripts and automation (bypasses LM Studio API limitations)
+
 ## Core Objectives
 
 1. **Network Access**: Enable HTTP transport for LAN/WAN access
@@ -111,7 +115,39 @@ Phase 3 transforms the Librarian MCP Server from a single-user local tool into a
 
 ## Phase 3A: Detailed Deliverables
 
-### 1. HTTP Transport (FastMCP One-Liner)
+### Architecture Update: Dual HTTP Implementation
+
+**Critical Discovery**: LM Studio's HTTP API does NOT expose MCP tools to the model. The model only has built-in knowledge, not access to MCP tools like `search_library`, `sync_documents`, etc.
+
+**Solution**: Implement **TWO HTTP layers**:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Librarian HTTP Server                  │
+├─────────────────────────────────────────────────────────┤
+│                                                           │
+│  Layer 1: FastMCP HTTP Transport                        │
+│  ├── For MCP clients (Jan, LM Studio chat, Claude)      │
+│  ├── Exposes tools via MCP protocol over HTTP           │
+│  └── Tools: search_library, sync_documents, etc.        │
+│                                                           │
+│  Layer 2: Direct HTTP API (NEW!)                        │
+│  ├── For validation scripts and automation              │
+│  ├── REST endpoints that call tools directly            │
+│  └── No MCP protocol - pure HTTP requests               │
+│                                                           │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Why Both Layers**:
+- **Layer 1** enables MCP clients to connect over HTTP instead of stdio
+- **Layer 2** enables automated validation scripts (bypassing LM Studio API limitations)
+
+---
+
+### 1. FastMCP HTTP Transport (Layer 1)
+
+**Purpose**: Enable MCP clients to connect over HTTP
 
 **Implementation**:
 ```python
@@ -144,11 +180,180 @@ export LIBRARIAN_PORT=8000
 python mcp_server/librarian_mcp.py --transport http --host 0.0.0.0 --port 8000
 ```
 
-**Deliverable**: HTTP server operational at `http://localhost:8000`
+**Deliverable**: MCP-over-HTTP server at `http://localhost:8000` for MCP clients
 
 ---
 
-### 2. Parse `library_validation.md` Function
+### 2. Direct HTTP API (Layer 2) - NEW!
+
+**Purpose**: Enable validation scripts and automation tools to call librarian tools directly via HTTP
+
+**Implementation**:
+```python
+# mcp_server/http_api.py
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uvicorn
+
+app = FastAPI(title="Librarian HTTP API")
+
+# Core business logic (shared with MCP tools)
+from mcp_server.core.document_manager import DocumentManager
+from mcp_server.backend.factory import get_backend
+from mcp_server.core.metadata_store import MetadataStore
+from mcp_server.core.ignore_patterns import IgnorePatterns
+
+# Initialize singletons
+backend = get_backend()
+metadata = MetadataStore()
+ignore_patterns = IgnorePatterns()
+doc_manager = DocumentManager(backend, metadata, ignore_patterns)
+
+# Request/Response models
+class SearchRequest(BaseModel):
+    query: str
+    limit: int = 5
+
+class SearchResponse(BaseModel):
+    results: list
+    total_chunks: int
+
+class SyncRequest(BaseModel):
+    path: str
+    extensions: list[str] = None
+    recursive: bool = True
+
+class SyncResponse(BaseModel):
+    added: int
+    updated: int
+    unchanged: int
+    removed: int
+    errors: list[str]
+
+# HTTP endpoints
+@app.post("/search_library", response_model=SearchResponse)
+def search_library(request: SearchRequest) -> SearchResponse:
+    """
+    Search library via HTTP API (bypasses MCP protocol).
+
+    Args:
+        request: SearchRequest with query and limit
+
+    Returns:
+        SearchResponse with results and metadata
+    """
+    try:
+        results = doc_manager.backend.query(request.query, limit=request.limit)
+        return SearchResponse(
+            results=results,
+            total_chunks=len(results)
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/sync_documents", response_model=SyncResponse)
+def sync_documents(request: SyncRequest) -> SyncResponse:
+    """
+    Sync documents via HTTP API (bypasses MCP protocol).
+
+    Args:
+        request: SyncRequest with path, extensions, recursive flag
+
+    Returns:
+        SyncResponse with sync statistics
+    """
+    try:
+        result = doc_manager.sync_directory(
+            path=request.path,
+            extensions=set(request.extensions) if request.extensions else None,
+            recursive=request.recursive
+        )
+        return SyncResponse(**result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/stats")
+def get_stats():
+    """Get library statistics via HTTP API."""
+    try:
+        return doc_manager.get_stats()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/health")
+def health_check():
+    """Health check endpoint."""
+    return {"status": "healthy", "service": "librarian-http-api"}
+
+# Server startup
+def run_http_api(host: str = "0.0.0.0", port: int = 8001):
+    """Run the HTTP API server."""
+    uvicorn.run(app, host=host, port=port, log_level="info")
+
+if __name__ == "__main__":
+    run_http_api()
+```
+
+**Configuration**:
+```bash
+# Environment variables
+export LIBRARIAN_HTTP_API_ENABLED=true
+export LIBRARIAN_HTTP_API_HOST=0.0.0.0
+export LIBRARIAN_HTTP_API_PORT=8001
+
+# Run separately from MCP transport
+python mcp_server/http_api.py --host 0.0.0.0 --port 8001
+```
+
+**Or run alongside MCP transport**:
+```python
+# mcp_server/librarian_mcp.py
+def main():
+    # ... MCP setup ...
+
+    # Start HTTP API in separate thread if enabled
+    if os.getenv("LIBRARIAN_HTTP_API_ENABLED", "false").lower() == "true":
+        import threading
+        from mcp_server.http_api import run_http_api
+
+        http_thread = threading.Thread(
+            target=run_http_api,
+            kwargs={
+                "host": os.getenv("LIBRARIAN_HTTP_API_HOST", "0.0.0.0"),
+                "port": int(os.getenv("LIBRARIAN_HTTP_API_PORT", "8001"))
+            },
+            daemon=True
+        )
+        http_thread.start()
+        print(f"[librarian] HTTP API running on port {os.getenv('LIBRARIAN_HTTP_API_PORT', '8001')}")
+
+    # Run MCP transport (stdio or HTTP)
+    mcp.run(transport=transport, host=host, port=port)
+```
+
+**API Endpoints**:
+```
+POST /search_library    → Semantic search
+POST /sync_documents    → Sync directory
+GET  /stats            → Library statistics
+GET  /health           → Health check
+```
+
+**Deliverable**: HTTP API server at `http://localhost:8001` for automation
+
+**Usage Example**:
+```bash
+# Direct HTTP API call (bypasses LM Studio entirely)
+curl -X POST http://localhost:8001/search_library \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What are the librarian capabilities?", "limit": 5}'
+
+# Response: Direct search results with citations
+```
+
+---
+
+### 3. Parse `library_validation.md` Function
 
 **Implementation**:
 ```python
@@ -205,7 +410,9 @@ if __name__ == "__main__":
 
 ---
 
-### 3. Batch Query Runner via API
+### 3. Batch Query Runner via Direct HTTP API
+
+**Architecture Change**: Call Librarian HTTP API directly, NOT LM Studio API
 
 **Implementation**:
 ```python
@@ -217,15 +424,15 @@ from typing import List, Dict
 from parse_validation import parse_validation_md
 
 class BatchQueryRunner:
-    """Run validation queries via LM Studio HTTP API"""
+    """Run validation queries via Librarian HTTP API (direct tool access)"""
 
-    def __init__(self, api_endpoint: str = "http://localhost:1234/v1/chat/completions"):
+    def __init__(self, api_endpoint: str = "http://localhost:8001"):
         self.api_endpoint = api_endpoint
-        self.system_prompt = Path("prompt.md").read_text()
+        self.search_endpoint = f"{api_endpoint}/search_library"
 
     def run_query(self, query: str, query_num: int) -> Dict:
         """
-        Run a single validation query via HTTP API.
+        Run a single validation query via Librarian HTTP API.
 
         Args:
             query: The validation query text
@@ -235,31 +442,28 @@ class BatchQueryRunner:
             Dict with response metadata and content
         """
         payload = {
-            "model": "librarian",
-            "messages": [
-                {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": query}
-            ],
-            "temperature": 0.7,
-            "max_tokens": 8000
+            "query": query,
+            "limit": 5
         }
 
         try:
             response = requests.post(
-                self.api_endpoint,
+                self.search_endpoint,
                 json=payload,
                 timeout=120  # 2 minute timeout
             )
             response.raise_for_status()
 
             result = response.json()
-            content = result['choices'][0]['message']['content']
+
+            # Format results with citations
+            formatted_content = self._format_results(result['results'], query)
 
             return {
                 'query_num': query_num,
                 'status': 'success',
-                'content': content,
-                'tokens_used': result.get('usage', {}).get('total_tokens', 0)
+                'content': formatted_content,
+                'total_chunks': result['total_chunks']
             }
 
         except Exception as e:
@@ -268,6 +472,22 @@ class BatchQueryRunner:
                 'status': 'error',
                 'error': str(e)
             }
+
+    def _format_results(self, results: List[Dict], query: str) -> str:
+        """Format search results into librarian-style response with citations"""
+        if not results:
+            return f"No results found for query: {query}"
+
+        formatted = []
+        formatted.append(f"# Search Results for: {query}\n\n")
+
+        for i, result in enumerate(results, 1):
+            formatted.append(f"## Result {i}\n")
+            formatted.append(f"{result['text']}\n\n")
+            formatted.append(f"**Source**: {result.get('metadata', {}).get('source', 'Unknown')}\n")
+            formatted.append(f"**Similarity**: {result.get('similarity_score', 0):.2f}\n\n")
+
+        return ''.join(formatted)
 
     def run_batch(self, queries: List[Dict]) -> List[Dict]:
         """
@@ -297,7 +517,7 @@ class BatchQueryRunner:
 if __name__ == "__main__":
     import sys
 
-    api_endpoint = sys.argv.get(1, "http://localhost:1234/v1/chat/completions")
+    api_endpoint = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8001"
 
     queries = parse_validation_md()
     runner = BatchQueryRunner(api_endpoint)
@@ -306,7 +526,15 @@ if __name__ == "__main__":
     print(f"\nComplete: {len(results)} queries processed")
 ```
 
-**Deliverable**: `scripts/run_batch_validation.py` that executes all queries via HTTP
+**Key Changes**:
+- ✅ Calls `http://localhost:8001/search_library` (Librarian API)
+- ❌ No longer calls LM Studio API (doesn't have MCP tools)
+- ✅ Direct tool access via HTTP
+- ✅ No LLM model needed - pure librarian search
+
+**Deliverable**: `scripts/run_batch_validation.py` that queries librarian directly
+
+---
 
 ---
 
@@ -570,7 +798,7 @@ if __name__ == "__main__":
 set -e
 
 # Configuration
-LM_STUDIO_API="${LM_STUDIO_API:-http://localhost:1234/v1/chat/completions}"
+LIBRARIAN_API="${LIBRARIAN_API:-http://localhost:8001}"
 OUTPUT_DIR="reports/validation_$(date +%Y-%m-%d_%H%M%S)"
 PARSER_SCRIPT="scripts/parse_validation.py"
 RUNNER_SCRIPT="scripts/run_batch_validation.py"
@@ -581,49 +809,87 @@ echo "======================================"
 echo "Librarian Automated Validation Suite"
 echo "======================================"
 echo ""
-echo "API Endpoint: $LM_STUDIO_API"
+echo "Librarian API Endpoint: $LIBRARIAN_API"
 echo "Output Directory: $OUTPUT_DIR"
 echo ""
 
+# Check if librarian HTTP API is running
+echo "[0/6] Checking Librarian HTTP API..."
+if ! curl -s "$LIBRARIAN_API/health" > /dev/null 2>&1; then
+    echo "✗ Librarian HTTP API not responding at $LIBRARIAN_API"
+    echo ""
+    echo "Please start the Librarian HTTP API:"
+    echo "  export LIBRARIAN_HTTP_API_ENABLED=true"
+    echo "  python mcp_server/librarian_mcp.py --transport http"
+    echo ""
+    exit 1
+fi
+echo "✓ Librarian HTTP API is running"
+echo ""
+
 # Step 1: Parse validation queries
-echo "[1/5] Parsing validation queries..."
+echo "[1/6] Parsing validation queries..."
 python3 $PARSER_SCRIPT
 echo "✓ Queries parsed"
 echo ""
 
 # Step 2: Run batch validation
-echo "[2/5] Running batch validation queries..."
-python3 $RUNNER_SCRIPT "$LM_STUDIO_API"
+echo "[2/6] Running batch validation queries..."
+python3 $RUNNER_SCRIPT "$LIBRARIAN_API"
 echo "✓ Batch queries complete"
 echo ""
 
 # Step 3: Write response files
-echo "[3/5] Writing response files..."
+echo "[3/6] Writing response files..."
 python3 $WRITER_SCRIPT --output "$OUTPUT_DIR"
 echo "✓ Responses written to $OUTPUT_DIR/responses/"
 echo ""
 
 # Step 4: Generate summary report
-echo "[4/5] Generating summary report..."
+echo "[4/6] Generating summary report..."
 python3 $REPORT_SCRIPT "$OUTPUT_DIR"
 echo "✓ Report generated: $OUTPUT_DIR/summary_report.md"
 echo ""
 
 # Step 5: Display summary
-echo "[5/5] Validation Complete!"
+echo "[5/6] Validation Complete!"
 echo "======================================"
 echo ""
 echo "Results:"
+echo "  - Librarian API: $LIBRARIAN_API"
 echo "  - Output Directory: $OUTPUT_DIR"
 echo "  - Summary Report: $OUTPUT_DIR/summary_report.md"
-echo "  - Response Files: $(ls $OUTPUT_DIR/responses/ | wc -l) files"
+echo "  - Response Files: $(ls $OUTPUT_DIR/responses/ 2>/dev/null | wc -l) files"
 echo ""
 echo "View results:"
 echo "  cat $OUTPUT_DIR/summary_report.md"
 echo ""
+
+# Step 6: Open report if possible
+echo "[6/6] Opening summary report..."
+if command -v xdg-open > /dev/null; then
+    xdg-open "$OUTPUT_DIR/summary_report.md" 2>/dev/null &
+elif command -v open > /dev/null; then
+    open "$OUTPUT_DIR/summary_report.md" 2>/dev/null &
+else
+    echo "Manual open: cat $OUTPUT_DIR/summary_report.md"
+fi
+echo ""
 ```
 
-**Deliverable**: `scripts/run_validation.sh` with progress tracking
+**Deliverable**: `scripts/run_validation.sh` with progress tracking and health checks
+
+**Usage**:
+```bash
+# Default (localhost:8001)
+./scripts/run_validation.sh
+
+# Custom endpoint
+LIBRARIAN_API=http://localhost:9000 ./scripts/run_validation.sh
+
+# Cron job (daily at 2 AM)
+0 2 * * * /path/to/librarian-mcp/scripts/run_validation.sh
+```
 
 ---
 
@@ -1307,24 +1573,34 @@ ls -lt reports/validation_*/
 ### Phase 3A: HTTP Transport + Batch Validation (Quick Win)
 
 **Deliverables** (in order):
-1. ✅ HTTP transport (FastMCP one-liner) - `mcp.run(transport="http")`
-2. ✅ `parse_validation_md()` function - Extract queries from library_validation.md
-3. ✅ Batch query runner via API - HTTP requests to LM Studio
-4. ✅ Response file writer - Organized output to `reports/validation_*/`
-5. ✅ Comparison report generator - Summary statistics and quality metrics
-6. ✅ Run script with progress output - One-command validation
+1. ✅ FastMCP HTTP transport (Layer 1) - `mcp.run(transport="http")`
+2. ✅ Direct HTTP API (Layer 2) - FastAPI endpoints for tool access
+3. ✅ `parse_validation_md()` function - Extract queries from library_validation.md
+4. ✅ Batch query runner via Direct HTTP API - HTTP requests to librarian (NOT LM Studio)
+5. ✅ Response file writer - Organized output to `reports/validation_*/`
+6. ✅ Comparison report generator - Summary statistics and quality metrics
+7. ✅ Run script with progress output - One-command validation
 
 **Files to create**:
+- `mcp_server/http_api.py` - Direct HTTP API (FastAPI)
 - `scripts/parse_validation.py` - Query parser
-- `scripts/run_batch_validation.py` - Batch HTTP query runner
+- `scripts/run_batch_validation.py` - Batch HTTP query runner (calls librarian API)
 - `scripts/write_responses.py` - Response file writer
 - `scripts/generate_report.py` - Report generator
 - `scripts/run_validation.sh` - Main validation script
 
 **Files to modify**:
-- `mcp_server/librarian_mcp.py` - Add HTTP transport support
+- `mcp_server/librarian_mcp.py` - Add HTTP transport + HTTP API startup
+- `requirements.txt` - Add FastAPI and uvicorn dependencies
 
-**Estimated effort**: 1-2 weeks (6 focused deliverables)
+**Dependencies to add**:
+```
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+```
+
+**Estimated effort**: 1-2 weeks (7 focused deliverables)
 
 ### Phase 3B: Authentication (Security)
 1. API key system
