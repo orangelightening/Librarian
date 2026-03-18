@@ -8,8 +8,10 @@ from pathlib import Path
 
 # Configuration will be set during registration
 SAFE_WORKING_DIR = None
+LIBRARIAN_WRITE_DIR = "librarian"  # Subdirectory for write operations
 MAX_OUTPUT_CHARS = 8000
 DEFAULT_TIMEOUT_SECONDS = 15
+MAX_WRITE_FILE_SIZE = 100000  # 100KB max for write operations
 
 ALLOWED_BINARY_NAMES = {
     "ls", "cd", "pwd", "whoami", "echo", "cat", "find", "grep", "head", "tail",
@@ -403,15 +405,100 @@ def register_cli_tools(mcp, safe_dir: str):
             return f"[error]\nCould not summarize file: {e}"
 
     @mcp.tool()
+    def write_document(path: str, content: str, create_dirs: bool = True) -> str:
+        """
+        Write content to a file in the librarian workspace subdirectory.
+
+        This tool creates a two-way communication channel where the librarian
+        can write files (analysis results, code changes, documentation updates)
+        that you can review and apply.
+
+        Args:
+            path: File path relative to /librarian/ subdirectory (e.g., 'analysis.md' or 'reports/fix.py')
+            content: File content to write
+            create_dirs: Create parent directories if they don't exist (default: True)
+
+        Returns:
+            Success confirmation with file path and size
+
+        Example:
+            write_document('analysis.md', '# Analysis Results\\n\\nFound 3 issues...')
+            write_document('reports/fix.py', 'def fix_bug():\\n    return "fixed"')
+        """
+        # Force path to be within librarian subdirectory
+        if not path:
+            return "[security error]\nPath cannot be empty"
+
+        # SECURITY: Strip leading/trailing slashes and whitespace
+        clean_path = path.strip().strip('/').strip('\\')
+
+        # SECURITY: Reject paths trying to escape librarian workspace
+        # Check if path contains project directory name or parent directory references
+        if '..' in clean_path or 'librarian-mcp' in clean_path.lower():
+            return f"[security error]\nPath contains invalid directory references. Got: '{path}'"
+
+        # Always force into librarian/ subdirectory
+        normalized_path = f"{LIBRARIAN_WRITE_DIR}/{clean_path}"
+
+        # Validate the combined path is safe
+        safe, resolved = is_safe_path(normalized_path, SAFE_WORKING_DIR)
+        if not safe:
+            return f"[security error]\n{resolved}"
+
+        # Additional check: ensure we're in the librarian subdirectory
+        resolved_real = os.path.realpath(resolved)
+        safe_dir_real = os.path.realpath(SAFE_WORKING_DIR)
+        librarian_dir = os.path.join(safe_dir_real, LIBRARIAN_WRITE_DIR)
+
+        if not resolved_real.startswith(librarian_dir):
+            return f"[security error]\nWrite operations are only allowed in /{LIBRARIAN_WRITE_DIR}/ subdirectory. Attempted: {resolved}"
+
+        # Check file size limit
+        if len(content) > MAX_WRITE_FILE_SIZE:
+            return f"[error]\nContent too large: {len(content)} bytes (max: {MAX_WRITE_FILE_SIZE} bytes)"
+
+        # Create parent directories if requested
+        file_dir = os.path.dirname(resolved_real)
+        if create_dirs and file_dir and not os.path.exists(file_dir):
+            try:
+                os.makedirs(file_dir, exist_ok=True)
+            except Exception as e:
+                return f"[error]\nCould not create directory {file_dir}: {e}"
+
+        # Prevent overwriting critical system files (defense in depth)
+        critical_patterns = ['password', 'secret', 'key', 'credential', '.env', 'config']
+        path_lower = resolved_real.lower()
+        for pattern in critical_patterns:
+            if pattern in path_lower:
+                return f"[security error]\nCannot write to files containing '{pattern}' in path"
+
+        try:
+            # Write the file
+            with open(resolved_real, 'w', encoding='utf-8') as f:
+                f.write(content)
+
+            # Log the write operation for audit trail
+            log_entry = f"[write] {resolved_real} ({len(content)} bytes)"
+            print(f"[librarian-mcp] {log_entry}")
+
+            return f"[success]\nWrote {len(content)} bytes to {resolved_real}\n"
+
+        except Exception as e:
+            return f"[error]\nCould not write file: {e}"
+
+    @mcp.tool()
     def server_info() -> str:
         """
         Returns server configuration, allowed commands, and supported document types.
         """
+        librarian_path = os.path.join(SAFE_WORKING_DIR, LIBRARIAN_WRITE_DIR)
         return (
             f"[librarian-mcp server info]\n"
             f"Allowed directory: {SAFE_WORKING_DIR}\n"
+            f"Write directory: {librarian_path}\n"
             f"Allowed commands: {', '.join(sorted(ALLOWED_BINARY_NAMES))}\n"
             f"Document extensions: {', '.join(sorted(DOCUMENT_EXTENSIONS))}\n"
             f"Timeout: {DEFAULT_TIMEOUT_SECONDS}s\n"
             f"Max output: {MAX_OUTPUT_CHARS} chars\n"
+            f"Max write size: {MAX_WRITE_FILE_SIZE} bytes\n"
         )
