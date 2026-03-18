@@ -47,6 +47,7 @@ output/
 # IDE and editor files
 .vscode/
 .idea/
+.obsidian/
 *.swp
 *.swo
 *~
@@ -115,6 +116,9 @@ metadata/
 .librarianignore
 .chromium/
 
+# Librarian workspace (transient analysis reports - not source documentation)
+librarian/
+
 # OS-specific
 .DS_Store
 .Trash-*
@@ -130,3 +134,6 @@ metadata/
 
 # Architectural recommendation documents (outdated)
 *-reco.md
+
+# Historical and archived documents
+.old-docs/
