@@ -107,6 +107,526 @@ Phase 3 transforms the Librarian MCP Server from a single-user local tool into a
 - [ ] Can run via cron with zero manual intervention
 - [ ] Response quality consistent across all queries
 
+---
+
+## Phase 3A: Detailed Deliverables
+
+### 1. HTTP Transport (FastMCP One-Liner)
+
+**Implementation**:
+```python
+# mcp_server/librarian_mcp.py
+def main():
+    mcp = FastMCP("librarian")
+
+    # Register tools...
+    register_library_tools(mcp)
+    register_cli_tools(mcp, safe_dir)
+
+    # NEW: HTTP transport support
+    transport = os.getenv("LIBRARIAN_TRANSPORT", "stdio")
+    if transport == "http":
+        host = os.getenv("LIBRARIAN_HOST", "0.0.0.0")
+        port = int(os.getenv("LIBRARIAN_PORT", "8000"))
+        mcp.run(transport="http", host=host, port=port)
+    else:
+        mcp.run(transport="stdio")
+```
+
+**Configuration**:
+```bash
+# Environment variables
+export LIBRARIAN_TRANSPORT=http
+export LIBRARIAN_HOST=0.0.0.0
+export LIBRARIAN_PORT=8000
+
+# Or CLI flags
+python mcp_server/librarian_mcp.py --transport http --host 0.0.0.0 --port 8000
+```
+
+**Deliverable**: HTTP server operational at `http://localhost:8000`
+
+---
+
+### 2. Parse `library_validation.md` Function
+
+**Implementation**:
+```python
+# scripts/parse_validation.py
+import re
+from pathlib import Path
+from typing import List, Dict
+
+def parse_validation_md(filepath: str = "library_validation.md") -> List[Dict]:
+    """
+    Parse library_validation.md and extract query metadata.
+
+    Returns:
+        List of dicts with keys: number, query, description
+    """
+    queries = []
+    current_query = None
+
+    with open(filepath, 'r') as f:
+        for line in f:
+            # Match "## Query N: Description"
+            if line.startswith("## Query "):
+                if current_query:
+                    queries.append(current_query)
+
+                match = re.match(r'## Query (\d+): (.+)', line)
+                if match:
+                    query_num, description = match.groups()
+                    current_query = {
+                        'number': int(query_num),
+                        'description': description.strip(),
+                        'query': '',
+                        'expected_outcome': ''
+                    }
+
+            # Capture query content (code blocks)
+            elif line.strip().startswith('Query:'):
+                current_query['query'] = line.split('Query:', 1)[1].strip()
+
+    if current_query:
+        queries.append(current_query)
+
+    return queries
+
+# CLI interface
+if __name__ == "__main__":
+    queries = parse_validation_md()
+    print(f"Found {len(queries)} validation queries")
+    for q in queries:
+        print(f"Query {q['number']}: {q['description']}")
+```
+
+**Deliverable**: `scripts/parse_validation.py` that extracts validation queries
+
+---
+
+### 3. Batch Query Runner via API
+
+**Implementation**:
+```python
+# scripts/run_batch_validation.py
+import requests
+import json
+from pathlib import Path
+from typing import List, Dict
+from parse_validation import parse_validation_md
+
+class BatchQueryRunner:
+    """Run validation queries via LM Studio HTTP API"""
+
+    def __init__(self, api_endpoint: str = "http://localhost:1234/v1/chat/completions"):
+        self.api_endpoint = api_endpoint
+        self.system_prompt = Path("prompt.md").read_text()
+
+    def run_query(self, query: str, query_num: int) -> Dict:
+        """
+        Run a single validation query via HTTP API.
+
+        Args:
+            query: The validation query text
+            query_num: Query number for tracking
+
+        Returns:
+            Dict with response metadata and content
+        """
+        payload = {
+            "model": "librarian",
+            "messages": [
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": query}
+            ],
+            "temperature": 0.7,
+            "max_tokens": 8000
+        }
+
+        try:
+            response = requests.post(
+                self.api_endpoint,
+                json=payload,
+                timeout=120  # 2 minute timeout
+            )
+            response.raise_for_status()
+
+            result = response.json()
+            content = result['choices'][0]['message']['content']
+
+            return {
+                'query_num': query_num,
+                'status': 'success',
+                'content': content,
+                'tokens_used': result.get('usage', {}).get('total_tokens', 0)
+            }
+
+        except Exception as e:
+            return {
+                'query_num': query_num,
+                'status': 'error',
+                'error': str(e)
+            }
+
+    def run_batch(self, queries: List[Dict]) -> List[Dict]:
+        """
+        Run all validation queries.
+
+        Args:
+            queries: List of query dicts from parse_validation_md()
+
+        Returns:
+            List of response dicts
+        """
+        results = []
+        total = len(queries)
+
+        for i, query_obj in enumerate(queries, 1):
+            print(f"[{i}/{total}] Running Query {query_obj['number']}: {query_obj['description']}")
+
+            result = self.run_query(query_obj['query'], query_obj['number'])
+            results.append(result)
+
+            status = "✓" if result['status'] == 'success' else '✗'
+            print(f"  {status} Query {query_obj['number']} complete")
+
+        return results
+
+# CLI interface
+if __name__ == "__main__":
+    import sys
+
+    api_endpoint = sys.argv.get(1, "http://localhost:1234/v1/chat/completions")
+
+    queries = parse_validation_md()
+    runner = BatchQueryRunner(api_endpoint)
+    results = runner.run_batch(queries)
+
+    print(f"\nComplete: {len(results)} queries processed")
+```
+
+**Deliverable**: `scripts/run_batch_validation.py` that executes all queries via HTTP
+
+---
+
+### 4. Response File Writer
+
+**Implementation**:
+```python
+# scripts/write_responses.py
+import json
+from pathlib import Path
+from datetime import datetime
+from typing import List, Dict
+
+class ResponseWriter:
+    """Write validation responses to organized directory structure"""
+
+    def __init__(self, output_dir: str = None):
+        if output_dir is None:
+            timestamp = datetime.now().strftime("%Y-%m-%d")
+            output_dir = f"reports/validation_{timestamp}"
+
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create subdirectories
+        (self.output_dir / "responses").mkdir(exist_ok=True)
+        (self.output_dir / "metadata").mkdir(exist_ok=True)
+
+    def write_response(self, query_num: int, content: str, metadata: Dict) -> str:
+        """
+        Write individual response to file.
+
+        Args:
+            query_num: Query number
+            content: Response content
+            metadata: Query metadata (description, tokens, etc.)
+
+        Returns:
+            Path to written file
+        """
+        # Format: response_001.md, response_002.md, etc.
+        filename = f"response_{query_num:03d}.md"
+        filepath = self.output_dir / "responses" / filename
+
+        # Write response with metadata header
+        with open(filepath, 'w') as f:
+            f.write(f"# Query {query_num}: {metadata.get('description', 'Unknown')}\n\n")
+            f.write(f"**Status**: {metadata.get('status', 'unknown')}\n")
+            f.write(f"**Tokens Used**: {metadata.get('tokens_used', 0)}\n")
+            f.write(f"**Timestamp**: {datetime.now().isoformat()}\n\n")
+            f.write("---\n\n")
+            f.write(content)
+
+        return str(filepath)
+
+    def write_all(self, results: List[Dict], queries: List[Dict]) -> List[str]:
+        """
+        Write all validation responses.
+
+        Args:
+            results: List of response dicts from BatchQueryRunner
+            queries: List of query dicts for metadata
+
+        Returns:
+            List of written file paths
+        """
+        written = []
+
+        for result in results:
+            query_num = result['query_num']
+
+            # Find matching query metadata
+            query_meta = next((q for q in queries if q['number'] == query_num), {})
+
+            filepath = self.write_response(
+                query_num,
+                result.get('content', ''),
+                {
+                    'description': query_meta.get('description', ''),
+                    'status': result['status'],
+                    'tokens_used': result.get('tokens_used', 0),
+                    'error': result.get('error', '')
+                }
+            )
+
+            written.append(filepath)
+
+        return written
+
+# CLI interface
+if __name__ == "__main__":
+    from run_batch_validation import BatchQueryRunner
+    from parse_validation import parse_validation_md
+
+    queries = parse_validation_md()
+    runner = BatchQueryRunner()
+    results = runner.run_batch(queries)
+
+    writer = ResponseWriter()
+    written = writer.write_all(results, queries)
+
+    print(f"\nWritten {len(written)} response files to {writer.output_dir}")
+```
+
+**Deliverable**: `scripts/write_responses.py` that writes organized response files
+
+---
+
+### 5. Comparison Report Generator
+
+**Implementation**:
+```python
+# scripts/generate_report.py
+import json
+from pathlib import Path
+from datetime import datetime
+from typing import List, Dict
+
+class ReportGenerator:
+    """Generate comparison and summary reports for validation results"""
+
+    def __init__(self, output_dir: str):
+        self.output_dir = Path(output_dir)
+        self.responses_dir = self.output_dir / "responses"
+
+    def analyze_response(self, filepath: Path) -> Dict:
+        """
+        Analyze individual response for quality metrics.
+
+        Returns:
+            Dict with analysis results
+        """
+        content = filepath.read_text()
+
+        return {
+            'file': filepath.name,
+            'has_citations': '[Source:' in content,
+            'citation_count': content.count('[Source:'),
+            'line_count': len(content.split('\n')),
+            'char_count': len(content),
+            'has_errors': 'error' in content.lower() or 'not found' in content.lower()
+        }
+
+    def generate_summary(self) -> Dict:
+        """
+        Analyze all responses and generate summary statistics.
+
+        Returns:
+            Summary dict with metrics
+        """
+        response_files = sorted(self.responses_dir.glob("response_*.md"))
+
+        if not response_files:
+            return {'error': 'No response files found'}
+
+        analyses = [self.analyze_response(f) for f in response_files]
+
+        total_citations = sum(a['citation_count'] for a in analyses)
+        files_with_citations = sum(1 for a in analyses if a['has_citations'])
+        files_with_errors = sum(1 for a in analyses if a['has_errors'])
+
+        return {
+            'total_queries': len(response_files),
+            'files_with_citations': files_with_citations,
+            'total_citations': total_citations,
+            'avg_citations_per_response': total_citations / len(response_files) if response_files else 0,
+            'files_with_errors': files_with_errors,
+            'timestamp': datetime.now().isoformat()
+        }
+
+    def generate_markdown_report(self) -> str:
+        """
+        Generate comprehensive markdown report.
+
+        Returns:
+            Markdown report content
+        """
+        summary = self.generate_summary()
+
+        report = []
+        report.append("# Librarian Validation Report\n")
+        report.append(f"**Generated**: {summary['timestamp']}\n")
+        report.append("---\n\n")
+
+        # Executive Summary
+        report.append("## Executive Summary\n\n")
+        report.append(f"- **Total Queries**: {summary['total_queries']}\n")
+        report.append(f"- **Responses with Citations**: {summary['files_with_citations']}/{summary['total_queries']}\n")
+        report.append(f"- **Total Citations**: {summary['total_citations']}\n")
+        report.append(f"- **Average Citations/Response**: {summary['avg_citations_per_response']:.1f}\n")
+        report.append(f"- **Responses with Errors**: {summary['files_with_errors']}\n\n")
+
+        # Quality Assessment
+        report.append("## Quality Assessment\n\n")
+        if summary['files_with_citations'] == summary['total_queries']:
+            report.append("✅ **All responses include proper citations**\n\n")
+        else:
+            missing = summary['total_queries'] - summary['files_with_citations']
+            report.append(f"⚠️ **{missing} responses missing citations**\n\n")
+
+        if summary['files_with_errors'] == 0:
+            report.append("✅ **No errors detected in responses**\n\n")
+        else:
+            report.append(f"⚠️ **{summary['files_with_errors']} responses contain errors**\n\n")
+
+        # Detailed Analysis
+        report.append("## Detailed Analysis\n\n")
+        response_files = sorted(self.responses_dir.glob("response_*.md"))
+
+        for f in response_files:
+            analysis = self.analyze_response(f)
+            status = "✓" if not analysis['has_errors'] else "✗"
+
+            report.append(f"### {status} {analysis['file']}\n\n")
+            report.append(f"- Citations: {analysis['citation_count']}\n")
+            report.append(f"- Lines: {analysis['line_count']}\n")
+            report.append(f"- Characters: {analysis['char_count']}\n\n")
+
+        return ''.join(report)
+
+    def write_report(self) -> str:
+        """
+        Generate and write summary report.
+
+        Returns:
+            Path to written report
+        """
+        report_content = self.generate_markdown_report()
+        report_path = self.output_dir / "summary_report.md"
+
+        report_path.write_text(report_content)
+
+        # Also write JSON metadata
+        metadata_path = self.output_dir / "metadata" / "summary.json"
+        metadata_path.write_text(json.dumps(self.generate_summary(), indent=2))
+
+        return str(report_path)
+
+# CLI interface
+if __name__ == "__main__":
+    import sys
+
+    output_dir = sys.argv[1] if len(sys.argv) > 1 else "reports/validation_latest"
+    generator = ReportGenerator(output_dir)
+
+    report_path = generator.write_report()
+    print(f"Report generated: {report_path}")
+```
+
+**Deliverable**: `scripts/generate_report.py` that creates summary reports
+
+---
+
+### 6. Run Script with Progress Output
+
+**Implementation**:
+```bash
+#!/bin/bash
+# scripts/run_validation.sh
+
+set -e
+
+# Configuration
+LM_STUDIO_API="${LM_STUDIO_API:-http://localhost:1234/v1/chat/completions}"
+OUTPUT_DIR="reports/validation_$(date +%Y-%m-%d_%H%M%S)"
+PARSER_SCRIPT="scripts/parse_validation.py"
+RUNNER_SCRIPT="scripts/run_batch_validation.py"
+WRITER_SCRIPT="scripts/write_responses.py"
+REPORT_SCRIPT="scripts/generate_report.py"
+
+echo "======================================"
+echo "Librarian Automated Validation Suite"
+echo "======================================"
+echo ""
+echo "API Endpoint: $LM_STUDIO_API"
+echo "Output Directory: $OUTPUT_DIR"
+echo ""
+
+# Step 1: Parse validation queries
+echo "[1/5] Parsing validation queries..."
+python3 $PARSER_SCRIPT
+echo "✓ Queries parsed"
+echo ""
+
+# Step 2: Run batch validation
+echo "[2/5] Running batch validation queries..."
+python3 $RUNNER_SCRIPT "$LM_STUDIO_API"
+echo "✓ Batch queries complete"
+echo ""
+
+# Step 3: Write response files
+echo "[3/5] Writing response files..."
+python3 $WRITER_SCRIPT --output "$OUTPUT_DIR"
+echo "✓ Responses written to $OUTPUT_DIR/responses/"
+echo ""
+
+# Step 4: Generate summary report
+echo "[4/5] Generating summary report..."
+python3 $REPORT_SCRIPT "$OUTPUT_DIR"
+echo "✓ Report generated: $OUTPUT_DIR/summary_report.md"
+echo ""
+
+# Step 5: Display summary
+echo "[5/5] Validation Complete!"
+echo "======================================"
+echo ""
+echo "Results:"
+echo "  - Output Directory: $OUTPUT_DIR"
+echo "  - Summary Report: $OUTPUT_DIR/summary_report.md"
+echo "  - Response Files: $(ls $OUTPUT_DIR/responses/ | wc -l) files"
+echo ""
+echo "View results:"
+echo "  cat $OUTPUT_DIR/summary_report.md"
+echo ""
+```
+
+**Deliverable**: `scripts/run_validation.sh` with progress tracking
+
+---
+
 ### When to Implement Remaining Phase 3
 
 **Implement Phase 3B-G when**:
@@ -784,11 +1304,27 @@ ls -lt reports/validation_*/
 
 ## Implementation Priority
 
-### Phase 3A: HTTP Transport (Foundation)
-1. Add `--transport http` CLI flag
-2. Implement HTTP server with FastMCP
-3. Basic configuration (host, port, CORS)
-4. Documentation for deployment
+### Phase 3A: HTTP Transport + Batch Validation (Quick Win)
+
+**Deliverables** (in order):
+1. ✅ HTTP transport (FastMCP one-liner) - `mcp.run(transport="http")`
+2. ✅ `parse_validation_md()` function - Extract queries from library_validation.md
+3. ✅ Batch query runner via API - HTTP requests to LM Studio
+4. ✅ Response file writer - Organized output to `reports/validation_*/`
+5. ✅ Comparison report generator - Summary statistics and quality metrics
+6. ✅ Run script with progress output - One-command validation
+
+**Files to create**:
+- `scripts/parse_validation.py` - Query parser
+- `scripts/run_batch_validation.py` - Batch HTTP query runner
+- `scripts/write_responses.py` - Response file writer
+- `scripts/generate_report.py` - Report generator
+- `scripts/run_validation.sh` - Main validation script
+
+**Files to modify**:
+- `mcp_server/librarian_mcp.py` - Add HTTP transport support
+
+**Estimated effort**: 1-2 weeks (6 focused deliverables)
 
 ### Phase 3B: Authentication (Security)
 1. API key system
