@@ -495,6 +495,190 @@ def search_all_libraries(query: str) -> str:
 
 ---
 
+## Phase 3H: Automated Validation Pipeline
+
+### Overview
+
+Automated validation suite that runs systematic tests against the librarian's documentation accuracy using fresh HTTP requests for each query - no manual context window management required.
+
+### The Problem: Manual Context Management
+
+Current validation testing requires:
+- Manual context window monitoring
+- Restarting the librarian between queries
+- Managing accumulated tool call history
+- Context pressure affecting response quality
+- Time-consuming manual process
+
+### The Solution: HTTP-Based Fresh Context
+
+**Shell Script Driver**: `scripts/run_validation.sh`
+
+```bash
+#!/bin/bash
+# run_validation.sh
+
+QUERIES_FILE="library_validation.md"
+OUTPUT_DIR="reports/validation_$(date +%Y-%m-%d)"
+mkdir -p "$OUTPUT_DIR"
+
+# Extract individual queries from validation.md
+# For each query:
+#   1. Start fresh LLM context via API
+#   2. Inject librarian system prompt
+#   3. Run single query
+#   4. Write response to response_NNN.md
+#   5. Kill context
+#   6. Next query - zero contamination
+```
+
+### The Key Insight
+
+**LM Studio's API** means each query can be a completely independent HTTP call:
+
+```python
+# Each query is just:
+response = requests.post("http://localhost:1234/v1/chat/completions",
+    json={
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": query}
+        ]
+    }
+)
+
+# Write response to file
+# Done. Next query starts completely fresh.
+```
+
+### Benefits
+
+- ✅ **Fresh context every time** - No accumulated history
+- ✅ **Same system prompt** injected fresh per query
+- ✅ **No context pressure** - Full 32k context per query
+- ✅ **Maximum quality** - Every query gets full attention
+- ✅ **Zero manual intervention** - Set it and forget it
+- ✅ **Cron-friendly** - Run overnight, read reports in morning ☕
+
+### Portability Consideration
+
+**Initial Implementation**: LM Studio-specific HTTP API
+- Uses `http://localhost:1234/v1/chat/completions` endpoint
+- OpenAI-compatible API format
+
+**Phase 3A Enhancement**: HTTP transport for Librarian MCP Server itself makes this portable to:
+- ✅ Ollama's HTTP API
+- ✅ LocalAI endpoints
+- ✅ Any LLM with OpenAI-compatible APIs
+- ✅ Cloud APIs (if desired)
+
+**Abstract the Endpoint**:
+```bash
+# Configurable LLM endpoint
+LLM_ENDPOINT="${LLM_ENDPOINT:-http://localhost:1234/v1/chat/completions}"
+
+# Same validation logic, different endpoint
+./run_validation.sh --endpoint "$LLM_ENDPOINT"
+```
+
+### Implementation
+
+**Validation Script Features**:
+```bash
+# Run all validation queries
+./scripts/run_validation.sh
+
+# Run specific query only
+./scripts/run_validation.sh --query 5
+
+# Custom LLM endpoint
+./scripts/run_validation.sh --endpoint http://localhost:8080/v1/chat/completions
+
+# Output to custom directory
+./scripts/run_validation.sh --output reports/valid_2026-03-18
+```
+
+**Report Format**:
+```
+reports/validation_2026-03-18/
+├── response_001.md  # Query 1: What are the librarian's core capabilities?
+├── response_002.md  # Query 2: How does the librarian handle document syncing?
+├── response_003.md  # Query 3: What tools does the librarian provide?
+...
+├── summary.md       # Overall pass/fail, issues found, recommendations
+└── metadata.json    # Timestamps, query counts, response times
+```
+
+**MCP Tool Integration**:
+```python
+@mcp.tool()
+def run_validation_suite(
+    queries_file: str = "library_validation.md",
+    output_dir: str = None
+) -> str:
+    """
+    Run automated validation suite against library documentation.
+
+    Returns summary report with pass/fail status and recommendations.
+    """
+    # Execute all validation queries via HTTP
+    # Generate summary report
+    # Return path to results
+```
+
+### Use Cases
+
+**Continuous Validation**:
+```bash
+# Run daily via cron
+0 2 * * * /path/to/librarian-mcp/scripts/run_validation.sh
+
+# Check results in morning
+ls -lt reports/validation_*/
+```
+
+**Pre-Release Testing**:
+```bash
+# Validate documentation before release
+./scripts/run_validation.sh --output reports/pre_release_test
+```
+
+**Regression Testing**:
+```bash
+# After major changes, verify documentation still accurate
+./scripts/run_validation.sh --baseline reports/known_good/
+```
+
+### Success Metrics
+
+- [ ] All 16 validation queries pass
+- [ ] Zero stale information detected
+- [ ] All citations reference actual files
+- [ ] No contradictory information
+- [ ] Response quality consistent across queries
+
+### Benefits Summary
+
+**For Development**:
+- Catch documentation drift immediately
+- Verify librarian accuracy automatically
+- Test after every documentation change
+- Zero manual effort required
+
+**For Users**:
+- Confidence in librarian's accuracy
+- Up-to-date information guaranteed
+- Transparent validation process
+- Historical accuracy tracking
+
+**For Quality Assurance**:
+- Systematic testing approach
+- Repeatable validation process
+- Automated regression testing
+- Quality metrics over time
+
+---
+
 ## Implementation Priority
 
 ### Phase 3A: HTTP Transport (Foundation)
@@ -538,6 +722,13 @@ def search_all_libraries(query: str) -> str:
 2. Directed queries to specific libraries
 3. Cross-library search capabilities
 4. Library permissions and access control
+
+### Phase 3H: Automated Validation Pipeline (Quality Assurance)
+1. Shell script driver for validation suite
+2. HTTP-based fresh context per query
+3. Automated report generation
+4. MCP tool integration for on-demand validation
+5. Cron-friendly scheduled validation
 
 ---
 
@@ -627,6 +818,7 @@ api_keys:
 - [ ] Concurrent write safety ensured
 - [ ] Document-type specific chunking operational
 - [ ] Multi-library support functional
+- [ ] Automated validation pipeline operational
 - [ ] Security audit passed
 - [ ] Production-ready for small teams
 
@@ -637,6 +829,170 @@ api_keys:
 - [ ] Performance testing (search latency, indexing speed)
 - [ ] Compatibility testing (various MCP clients)
 - [ ] Document type testing (PDF, DOCX, code, etc.)
+- [ ] Automated validation suite (all 16 queries passing)
+- [ ] Regression testing (documentation accuracy over time)
+
+---
+
+## Known Issues & Bugs to Fix
+
+### Bug #1: File Move Detection (NON-CRITICAL)
+
+**Status**: Documented, not affecting functionality
+**Impact**: Sync reporting accuracy only
+**Priority**: Low
+**Location**: `mcp_server/core/document_manager.py` → `sync_directory()`
+
+#### Problem Description
+
+When a file is moved (renamed to different path) with unchanged content, the sync operation incorrectly reports it as "added" instead of "updated."
+
+#### Expected Behavior
+
+```python
+# Move: /documents/reco.md → /reco.md
+# Expected sync results:
+Updated: 1    # Path change detected and updated
+Added: 0
+Unchanged: 39
+Removed: 0
+```
+
+#### Actual Behavior
+
+```python
+# Move: /documents/reco.md → /reco.md
+# Actual sync results:
+Updated: 0    # ❌ Should be 1
+Added: 1      # ❌ Should be 0
+Unchanged: 39
+Removed: 0
+```
+
+#### Root Cause Analysis
+
+**Current Logic Flow**:
+1. Scan filesystem and discover files
+2. Calculate SHA-256 checksum for each file
+3. Check if checksum exists in metadata
+4. If exists → "unchanged"
+5. If not exists → "added"
+
+**The Bug**: The logic doesn't detect when a file with the **same checksum** exists at a **different path**.
+
+**What Should Happen**:
+```python
+for file_path in discovered_files:
+    checksum = calculate_sha256(file_path)
+
+    # Check if this checksum already exists
+    existing_doc = metadata_store.get_by_checksum(checksum)
+
+    if existing_doc:
+        if existing_doc.path != file_path:
+            # FILE MOVED! Update path in metadata
+            existing_doc.path = file_path
+            metadata_store.update(existing_doc)
+            stats['updated'] += 1
+        else:
+            # File unchanged
+            stats['unchanged'] += 1
+    else:
+        # New file
+        add_document(file_path)
+        stats['added'] += 1
+```
+
+#### Why This Matters
+
+**Functionality**: ❌ Not affected - data is correct
+- Same document ID preserved ✅
+- Path updated correctly in metadata ✅
+- Search works properly ✅
+
+**Reporting**: ⚠️ Misleading - sync summary is wrong
+- Users see "Added: 1" when nothing was added
+- File moves are invisible in sync reports
+- Accurate change tracking lost
+
+#### Impact Assessment
+
+**Low Priority** - Non-critical bug:
+- ✅ No data corruption
+- ✅ No functional issues
+- ✅ Search works correctly
+- ✅ Document IDs preserved
+- ❌ Sync reporting inaccurate
+- ❌ Change tracking broken
+
+#### Fix Required
+
+**File**: `mcp_server/core/document_manager.py`
+
+**Method**: `sync_directory()`
+
+**Changes needed**:
+1. Add `get_by_checksum()` method to `MetadataStore`
+2. Detect file moves by checksum matching
+3. Update path when file moved
+4. Count as "updated" not "added"
+
+**Estimated effort**: 1-2 hours
+
+---
+
+### Bug #2: Rebuild Not Respecting .librarianignore ✅ FIXED
+
+**Status**: Fixed in commit `[ADD COMMIT HASH]`
+**Impact**: Critical - blocked proper rebuild functionality
+**Priority**: High
+
+#### Problem Description
+
+The `rebuild_library.py` script was not actually rebuilding - it only ran a sync operation, which preserved all existing documents including those that should be ignored.
+
+#### Root Cause
+
+Missing `clear()` methods:
+- `ChromaBackend` had no `clear()` method
+- `MetadataStore` had no `clear()` method
+- `rebuild_library.py` didn't clear existing data
+
+#### Fix Applied
+
+**Added methods**:
+```python
+# ChromaBackend.clear()
+def clear(self) -> bool:
+    """Clear all documents from the collection"""
+    all_data = collection.get()
+    all_ids = all_data.get('ids', [])
+    collection.delete(ids=all_ids)
+
+# MetadataStore.clear()
+def clear(self) -> bool:
+    """Clear all metadata, with backup"""
+    # Backs up existing index
+    # Clears in-memory index
+    # Saves empty index
+```
+
+**Updated rebuild_library.py**:
+```python
+# NEW: Clear existing data first
+backend.clear()
+metadata.store.clear()
+
+# THEN: Fresh sync
+doc_manager.sync_directory(...)
+```
+
+#### Result
+
+✅ `.obsidian` files now properly ignored
+✅ True rebuild with fresh ignore patterns
+✅ Metadata backup created before clearing
+✅ Proper reindexing from scratch
 
 ---
 
