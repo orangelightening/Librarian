@@ -8,3 +8,6 @@ chromadb>=0.4.0
 
 # Phase 2: Chonkie Integration (intelligent chunking)
 chonkie[all]>=1.6.0  # Includes all optional dependencies for full functionality
+
+# Environment variable management
+python-dotenv>=1.0.0
