@@ -8,7 +8,7 @@ set -e
 
 # Configuration
 LM_STUDIO_API="${LM_STUDIO_API:-http://localhost:1234/api/v1/chat}"
-OUTPUT_DIR="reports/validation_$(date +%Y-%m-%d_%H%M%S)"
+OUTPUT_DIR="librarian/reports/validation_$(date +%Y-%m-%d_%H%M%S)"
 PARSER_SCRIPT="scripts/parse_validation.py"
 RUNNER_SCRIPT="scripts/run_batch_validation.py"
 WRITER_SCRIPT="scripts/write_responses.py"

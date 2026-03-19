@@ -2,12 +2,14 @@
 #
 # Clear and Rebuild Librarian Library
 #
-# This script completely clears the database and rebuilds it from scratch.
+# This script clears the search index (ChromaDB + metadata) and rebuilds it from source documents.
+# **Source documents are never deleted** - only the search index is cleared and rebuilt.
 # Useful for:
 # - Switching backends (ChromaDB <-> Chonkie)
 # - Starting fresh with new .librarianignore rules
 # - Database corruption recovery
 # - Testing different chunking strategies
+# - Updating index after major documentation changes
 
 set -e  # Exit on error
 
@@ -28,8 +30,8 @@ if [ -z "$LIBRARIAN_BACKEND" ]; then
     echo ""
 fi
 
-# Confirm destruction
-read -p "⚠️  This will DELETE all documents in the library. Continue? (yes/no): " confirm
+# Confirm rebuild
+read -p "⚠️  This will clear the search index and rebuild it from source documents. Continue? (yes/no): " confirm
 if [ "$confirm" != "yes" ]; then
     echo "❌ Aborted"
     exit 1
@@ -72,14 +74,15 @@ python3 "$SCRIPT_DIR/rebuild_library.py"
 
 echo ""
 echo "======================================================================"
-echo "✅ Library rebuild complete!"
+echo "✅ Search index rebuild complete!"
 echo "======================================================================"
 echo ""
-echo "📚 Your library has been rebuilt with:"
+echo "📚 Your search index has been rebuilt:"
 echo "   Backend: ${LIBRARIAN_BACKEND:-chroma (default)}"
 echo "   Database: $PROJECT_ROOT/chroma_db"
 echo "   Metadata: $PROJECT_ROOT/metadata"
+echo "   Source documents: untouched ✓"
 echo ""
-echo "💡 Restart your MCP server to use the new library:"
+echo "💡 Restart your MCP server to use the updated index:"
 echo "   ./setup_mcp.sh"
 echo ""

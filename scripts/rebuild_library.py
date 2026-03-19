@@ -44,6 +44,13 @@ def main():
     ignore_patterns = IgnorePatterns(str(Settings.PROJECT_ROOT))
     doc_manager = DocumentManager(backend, metadata, ignore_patterns)
 
+    # Clear existing data for true rebuild
+    print("Clearing existing library...")
+    print("-" * 70)
+    backend.clear()
+    metadata.clear()
+    print()
+
     # Sync the project directory
     print("Starting sync...")
     result = doc_manager.sync_directory(

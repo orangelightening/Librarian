@@ -137,3 +137,33 @@ librarian/
 
 # Historical and archived documents
 .old-docs/
+
+# System prompts and configuration (human reference only)
+# These files define the model's behavior and should not be indexed as content
+prompt.md
+prompt_jan.md
+simple_prompt.md
+Tools.md
+CLAUDE.md
+prompt_patterns.md
+USER_GUIDE.md
+
+# Meta-documentation (setup, status, planning, API notes)
+QUICKSTART.md
+QUICK_START.md
+DOCUMENTATION_PLAN.md
+READY_FOR_TESTING.md
+STATUS.md
+Response 3.md
+Poem_Chonkie_Hippo_Spontaneous.md
+Jan api usage.md
+api changelog.md
+more api notes.md
+openai compatible api.md
+rest api.md
+Model prompt template in lmstudio.md
+JAN_VALIDATION_INDEX.md
+phase3_planning.md
+
+# NOTE: Core documentation (README.md, ARCHITECTURE.md, SECURITY.md, CONFIGURATION.md)
+# should be INDEXED so models can find them via search_library

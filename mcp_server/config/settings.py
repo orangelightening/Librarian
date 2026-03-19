@@ -26,7 +26,7 @@ class Settings:
     METADATA_PATH = os.getenv("LIBRARIAN_METADATA_PATH", str(PROJECT_ROOT / "metadata"))
 
     # Backend selection
-    BACKEND: Literal["chroma", "chonkie"] = os.getenv("LIBRARIAN_BACKEND", "chroma")
+    BACKEND: Literal["chroma", "chonkie"] = os.getenv("LIBRARIAN_BACKEND", "chonkie")
 
     # Chonkie (Phase 2)
     CHONKIE_URL = os.getenv("LIBRARIAN_CHONKIE_URL", "http://localhost:8000")

@@ -124,3 +124,31 @@ class MetadataStore:
             Number of documents
         """
         return len(self._index)
+
+    def clear(self) -> bool:
+        """
+        Clear all metadata from the store.
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            count = len(self._index)
+
+            if count > 0:
+                # Backup the existing index
+                backup_path = self.index_file.with_suffix('.json.bak')
+                import shutil
+                shutil.copy2(self.index_file, backup_path)
+                print(f"Backed up existing index to {backup_path}")
+
+            # Clear the index
+            self._index = {}
+            self._save_index()
+
+            print(f"Cleared {count} documents from metadata store")
+            return True
+
+        except Exception as e:
+            print(f"Error clearing metadata store: {e}")
+            return False

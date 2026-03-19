@@ -1,23 +1,26 @@
 # Librarian MCP Server - Quick Start
 
-## What Was Built
+## What Is It?
 
 A complete **Librarian MCP Server** that provides AI models with:
 - ✅ Semantic document search via ChromaDB
+- ✅ **Intelligent chunking via Chonkie (DEFAULT)**
 - ✅ Complete document lifecycle management (add, update, remove, sync)
 - ✅ Change detection (checksums track modifications)
 - ✅ Secure CLI and file access tools
+- ✅ **System prompt** (prompt.md) for consistent behavior
 - ✅ Self-contained (no other MCP servers needed)
+
+**Status**: Phase 2 Complete ✅ | **Chonkie is the default backend**
 
 ## Current Status
 
 **✅ System is fully functional and tested!**
 
-Test document successfully:
-- Ingested: `test-doc.md`
-- Document ID: `af8f56c0f353f122`
-- Chunks created: 1
-- Search tested: Working ✓
+Features:
+- **Dual Backend Architecture**: Chonkie (default) + ChromaDB (optional)
+- **14 MCP Tools**: 7 library + 5 file system + 2 system tools
+- **Production Ready**: Fully deployed and tested
 
 ## Quick Start Commands
 
@@ -77,12 +80,14 @@ python scripts/ingest.py --path ~/documents
 - `get_document_status(path)` - Check if current/outdated
 - `get_library_stats()` - Get statistics
 
-### CLI Tools (File Access)
-- `execute_command(command, args, cwd)` - Execute whitelisted commands
+### File System Tools (4)
 - `read_document(path)` - Read file contents
 - `list_documents(path, extension, recursive)` - List files
 - `search_documents(query, path, extension)` - Search file contents
 - `document_summary(path)` - Get file structure
+
+### System Tools (2)
+- `execute_command(command, args, cwd)` - Execute whitelisted commands
 - `server_info()` - Show configuration
 
 ## Usage Examples
@@ -119,7 +124,7 @@ librarian-mcp/
 │   ├── librarian_mcp.py       # Entry point
 │   ├── tools/                 # MCP tools
 │   ├── core/                  # Document manager, metadata store
-│   ├── backend/               # ChromaDB backend
+│   ├── backend/               # ChromaDB & Chonkie backends
 │   ├── ai_layer/              # Result aggregation
 │   └── config/                # Settings
 ├── scripts/                   # Utility scripts
@@ -127,10 +132,11 @@ librarian-mcp/
 ├── documents/                 # Document storage
 ├── chroma_db/                 # ChromaDB data
 ├── metadata/                  # Document tracking
+├── prompt.md                  # System prompt (librarian behavior)
 ├── venv/                      # Virtual environment
 ├── requirements.txt
 ├── setup_mcp.sh               # Startup script
-├── README.md
+├── README.md                  # Full documentation
 └── CLAUDE.md                  # For Claude Code
 ```
 
@@ -148,10 +154,11 @@ librarian-mcp/
 - Timeout protection
 - Output truncation
 
-### Backend Abstraction
-- ChromaDB (current)
-- Chonkie (Phase 2 - easy swap)
-- No tool code changes needed
+### Backend Selection
+- **Chonkie** (default) - Intelligent semantic chunking, better search results
+- **ChromaDB** (optional) - Simple chunking, faster processing
+- Switch via: `export LIBRARIAN_BACKEND=chroma` or `export LIBRARIAN_BACKEND=chonkie`
+- No tool code changes needed - both backends respect all security features
 
 ## Testing
 
@@ -177,8 +184,11 @@ Next steps:
 ## Documentation
 
 - `README.md` - Full documentation
+- `ARCHITECTURE.md` - Complete technical architecture
+- `CONFIGURATION.md` - Detailed configuration reference
+- `SECURITY.md` - Security model and boundaries
 - `CLAUDE.md` - Developer guidance
-- `claude-reco-v2.md` - Architecture and design decisions
+- `Tools.md` - Complete tool reference
 
 ## Support
 
@@ -189,6 +199,7 @@ For issues or questions:
 
 ---
 
-**Version**: 1.0.0
+**Version**: 2.0.0 (Phase 2 Complete)
 **Status**: Production Ready ✓
-**Last Updated**: 2026-03-16
+**Default Backend**: Chonkie (intelligent semantic chunking)
+**Last Updated**: 2026-03-18

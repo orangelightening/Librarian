@@ -1,3 +1,20 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
 """
 Document Manager - Handles complete document lifecycle.
 """
@@ -216,7 +233,8 @@ class DocumentManager:
             "size": file_meta['size'],
             "modified": file_meta['modified'],
             "chunk_count": len(chunks),
-            "indexed_at": datetime.now().isoformat()
+            "indexed_at": datetime.now().isoformat(),
+            "source": source or str(file_path.parent)  # Track source directory for safe sync
         })
 
         return {
@@ -303,7 +321,10 @@ class DocumentManager:
 
         # Get current metadata
         indexed = self.metadata.get_all()
-        indexed_paths = {str(Path(doc['path']).resolve()) for doc in indexed}
+        indexed_paths = {str(Path(doc['path']).resolve()): doc for doc in indexed}
+
+        # Resolve sync path for source tracking
+        sync_path_resolved = str(path_obj.resolve())
 
         results = {
             "added": 0,
@@ -314,14 +335,15 @@ class DocumentManager:
             "errors": []
         }
 
-        current_paths = set()
+        current_paths = set()  # Track paths found in current scan
 
         # Process each document
         for doc_path in documents:
             current_paths.add(str(doc_path.resolve()))
 
             try:
-                result = self.add_document(doc_path)
+                # Pass sync directory as source for tracking
+                result = self.add_document(doc_path, source=str(path_obj))
 
                 if result['status'] == 'added':
                     results['added'] += 1
@@ -333,13 +355,28 @@ class DocumentManager:
                 results['errors'].append(f"{doc_path}: {str(e)}")
 
         # Remove documents that no longer exist
-        for path in indexed_paths - current_paths:
-            doc = self.metadata.get_by_path(path)
-            if doc:
-                if self.remove_document(doc['document_id']):
-                    results['removed'] += 1
-                else:
-                    results['errors'].append(f"{path}: Failed to remove")
+        # IMPORTANT: Only remove documents that were indexed from THIS directory (source tracking)
+        for path, doc in indexed_paths.items():
+            if path not in current_paths:
+                # Check if this document was indexed from the same source directory
+                doc_source = doc.get('source', '')
+
+                # Skip documents without source tracking (legacy data)
+                if not doc_source or doc_source == 'NO_SOURCE':
+                    continue
+
+                # Resolve doc_source to absolute path for comparison
+                try:
+                    doc_source_resolved = str(Path(doc_source).resolve())
+                except:
+                    continue
+
+                # Only remove if this document was indexed from the sync directory
+                if doc_source_resolved == sync_path_resolved:
+                    if self.remove_document(doc['document_id']):
+                        results['removed'] += 1
+                    else:
+                        results['errors'].append(f"{path}: Failed to remove")
 
         return results
 

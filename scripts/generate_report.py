@@ -142,7 +142,7 @@ class ReportGenerator:
 if __name__ == "__main__":
     import sys
 
-    output_dir = sys.argv[1] if len(sys.argv) > 1 else "reports/validation_latest"
+    output_dir = sys.argv[1] if len(sys.argv) > 1 else "librarian/reports/validation_latest"
 
     try:
         generator = ReportGenerator(output_dir)

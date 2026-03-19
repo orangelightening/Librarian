@@ -16,7 +16,7 @@ class ResponseWriter:
     def __init__(self, output_dir: str = None):
         if output_dir is None:
             timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-            output_dir = f"reports/validation_{timestamp}"
+            output_dir = f"librarian/reports/validation_{timestamp}"
 
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -91,12 +91,31 @@ class ResponseWriter:
 
 if __name__ == "__main__":
     import sys
+    import json
 
-    # Simple test
-    output_dir = sys.argv[1] if len(sys.argv) > 1 else None
+    # Parse arguments
+    output_dir = None
+    if len(sys.argv) > 1 and sys.argv[1] == "--output" and len(sys.argv) > 2:
+        output_dir = sys.argv[2]
 
+    # Load results from batch validation
+    try:
+        with open("validation_results.json", 'r') as f:
+            data = json.load(f)
+        queries = data['queries']
+        results = data['results']
+    except FileNotFoundError:
+        print("✗ Error: validation_results.json not found. Run run_batch_validation.py first.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"✗ Error loading results: {e}")
+        sys.exit(1)
+
+    # Write responses
     writer = ResponseWriter(output_dir)
     print(f"✓ Response writer initialized")
     print(f"  Output directory: {writer.output_dir}")
-    print(f"  Responses: {writer.output_dir / 'responses'}")
-    print(f"  Metadata: {writer.output_dir / 'metadata'}")
+
+    written = writer.write_all(results, queries)
+    print(f"✓ Responses written to {writer.output_dir / 'responses'}")
+    print(f"  Total files: {len(written)}")

@@ -1,0 +1,48 @@
+Here are all **40 indexed documents** in your library:
+
+### 📄 **Top-Level Documentation**
+1. **mcp-config.json** - Configuration file (1 chunk, 422 bytes)
+2. **requirements.txt** - Python dependencies (1 chunk, 252 bytes)
+3. **CHONKIE_INTEGRATION.md** - Chonkie backend guide (9 chunks, 7,887 bytes)
+4. **Poem_Chonkie_Hippo_Spontaneous.md** - Chonkie hippo poem (3 chunks, 1,444 bytes)
+5. **Indexed_files.md** - Library overview (4 chunks, 2,922 bytes)
+6. **PHASE2.md** - Phase 2 roadmap (20 chunks, 15,255 bytes)
+7. **phase3_planning.md** - Phase 3 planning with bugs (29 chunks, 19,663 bytes) ⭐
+8. **status-2026-03-16.md** - Status report (10 chunks, 8,658 bytes)
+9. **SECURITY_AND_BOUNDARIES.md** - Security guide (12 chunks, 9,390 bytes)
+10. **QUICKSTART.md** - Quick start guide (6 chunks, 5,191 bytes)
+11. **Tools.md** - Tool documentation (2 chunks, 1,451 bytes)
+12. **USER_GUIDE.md** - User guide (30 chunks, 25,907 bytes)
+13. **README.md** - Project readme (8 chunks, 7,017 bytes)
+14. **CHONKIE_MIGRATION.md** - Chonkie migration guide (13 chunks, 9,408 bytes)
+15. **CLAUDE.md** - Claude-specific docs (12 chunks, 10,010 bytes)
+16. **reco.md** - Reco project docs (26 chunks, 19,189 bytes)
+17. **prompt.md** - Prompt templates (9 chunks, 8,127 bytes)
+18. **IMPLEMENTATION_SUMMARY.md** - Implementation summary (13 chunks, 11,317 bytes)
+
+### 🔧 **Core Server Code** (`mcp_server/`)
+19. **ai_layer/ai_layer_interface.py** - AI layer interface (5 chunks, 3,877 bytes)
+20. **core/metadata_store.py** - Metadata storage (5 chunks, 4,187 bytes)
+21. **core/document_manager.py** - Document management (14 chunks, 12,601 bytes) ⭐
+22. **core/ignore_patterns.py** - Ignore patterns (7 chunks, 5,986 bytes)
+23. **backend/chonkie_backend.py** - Chonkie backend (5 chunks, 3,635 bytes)
+24. **backend/base.py** - Base backend (2 chunks, 1,250 bytes)
+25. **backend/factory.py** - Backend factory (1 chunk, 954 bytes)
+26. **backend/chroma_backend.py** - ChromaDB backend (10 chunks, 8,593 bytes)
+27. **backend/__init__.py** - Backend init (1 chunk, 320 bytes)
+28. **config/settings.py** - Settings module (2 chunks, 1,959 bytes)
+29. **config/librarian_prompt.py** - Librarian prompt (10 chunks, 8,932 bytes)
+30. **tools/cli_tools.py** - CLI tools (18 chunks, 16,493 bytes)
+31. **tools/library_tools.py** - Library tools (13 chunks, 11,944 bytes)
+32. **librarian_mcp.py** - Main MCP server (4 chunks, 3,671 bytes)
+
+### 🧪 **Test Scripts** (`scripts/`)
+33. **ingest.py** - Document ingestion script (5 chunks, 3,910 bytes)
+34. **test_chonkie_backend_integration.py** - Backend integration test (6 chunks, 5,102 bytes)
+35. **test_chonkie.py** - Basic Chonkie test (7 chunks, 6,008 bytes)
+36. **test_chonkie_e2e.py** - End-to-end test (10 chunks, 8,775 bytes)
+37. **rebuild_library.py** - Library rebuild script (3 chunks, 2,664 bytes)
+38. **test_chonkie_final.py** - Final integration test (6 chunks, 5,323 bytes)
+39. **test_chonkie_simple.py** - Simple test (4 chunks, 3,459 bytes)
+40. **test_chonkie_integration.py** - Integration test (6 chunks, 5,517 bytes)
+
