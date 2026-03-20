@@ -185,6 +185,9 @@
   },
   "active": "e692e867f9282c39",
   "lastOpenFiles": [
+    "PHASE2/chonkie_chunking_by_document_type.md",
+    "Librarian_poetry/A poem by the librarian. qwen3.5 4b 8 bit.md",
+    "Prompt_craft/System_prompts/Archive/System_prompt.md",
     "System_prompt.md",
     "Prompt_craft/System_prompts/active",
     "Prompt_craft/System_prompts/active/System_prompt.md",
@@ -206,7 +209,6 @@
     "Use_cases/medical_records_compliance.md",
     "Prompt_craft/prompting_suggestions.md",
     "guide_them.md",
-    "Prompt_craft/System_prompts/Archive/System_prompt.md",
     "Prompt_craft/Validation_prompts/validation_scripts/sequencing_scripts.md",
     "Prompt_craft/Validation_prompts/validation_scripts/query_16_write_access.md",
     "Prompt_craft/Validation_prompts/validation_scripts/query_15_troubleshooting.md",
@@ -218,8 +220,6 @@
     "Prompt_craft/Validation_prompts/validation_scripts/query_09_rebuild.md",
     "Prompt_craft/Validation_prompts/validation_scripts/query_08_lifecycle.md",
     "Prompt_craft/Validation_prompts/validation_scripts/query_07_deployment.md",
-    "Prompt_craft/Validation_prompts/validation_scripts/batch6_prompt.md",
-    "Prompt_craft/Validation_prompts/validation_scripts/batch5_prompt.md",
-    "Prompt_craft/Validation_prompts/validation_scripts/batch4_prompt.md"
+    "Prompt_craft/Validation_prompts/validation_scripts/batch6_prompt.md"
   ]
 }

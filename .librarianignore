@@ -141,6 +141,9 @@ Librarian_poetry/
 # Historical and archived documents
 .old-docs/
 
+# Phase 2 implementation planning (internal reference, not content)
+PHASE2/
+
 # System prompts and configuration (human reference only)
 # These files define the model's behavior and should not be indexed as content
 prompt.md
