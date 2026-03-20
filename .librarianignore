@@ -119,6 +119,9 @@ metadata/
 # Librarian workspace (transient analysis reports - not source documentation)
 librarian/
 
+# Creative content (poetry, stories - not for semantic search)
+Librarian_poetry/
+
 # OS-specific
 .DS_Store
 .Trash-*
