@@ -1,0 +1,221 @@
+{
+  "main": {
+    "id": "685b63eadf88213d",
+    "type": "split",
+    "children": [
+      {
+        "id": "26854352f469a406",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b67fff621ca5b13d",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "a241610cbccb9c8c",
+    "type": "split",
+    "children": [
+      {
+        "id": "b1143e2292c4f9f3",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "e692e867f9282c39",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "5e4b88fe67b779e1",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "b0dc3bc4630fa0cd",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 367.5069465637207
+  },
+  "right": {
+    "id": "1705cddc131e36ef",
+    "type": "split",
+    "children": [
+      {
+        "id": "f01ee9756c988191",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "aeb4adf77ea4eec8",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "reco.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for reco"
+            }
+          },
+          {
+            "id": "c29002da8ba6a33c",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "reco.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from reco"
+            }
+          },
+          {
+            "id": "48e849f10a00690a",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "419dae7533eee050",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "fb952a864627bf4b",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "reco.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of reco"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "e692e867f9282c39",
+  "lastOpenFiles": [
+    "Prompt_craft/System_prompts/System_prompt.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/sequencing_scripts.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/query_16_write_access.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/query_15_troubleshooting.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/query_14_examples.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/query_13_differentiators.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/query_11_file_reading.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/query_12_phase_comparison.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/query_10_search_architecture.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/query_09_rebuild.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/query_08_lifecycle.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/query_07_deployment.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/batch6_prompt.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/batch5_prompt.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/batch4_prompt.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/batch2_prompt.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/batch3_prompt.md",
+    "Prompt_craft/Validation_prompts/validation_scripts/batch1_prompt.md",
+    "Prompt_craft/Validation_prompts/validation_with_tool_execution.json",
+    "Prompt_craft/Validation_prompts/validation_scripts",
+    "Prompt_craft/Validation_prompts/validation_results.json",
+    "Prompt_craft/Validation_prompts/validation_debug.log",
+    "Prompt_craft/Validation_prompts/direct_validation_results.json",
+    "Prompt_craft/Validation_prompts/batch1_prompt.txt",
+    "Prompt_craft/Validation_prompts",
+    "Prompt_craft/Specialist_prompts",
+    "Prompt_craft/System_prompts/guide_them.md",
+    "Prompt_craft/System_prompts",
+    "Prompt_craft/Validation/batch1_prompt.txt",
+    "Prompt_craft/Validation/validation_scripts/sequencing_scripts.md",
+    "Prompt_craft/Validation/validation_scripts/query_16_write_access.md",
+    "Prompt_craft/Validation/validation_scripts/query_15_troubleshooting.md",
+    "Prompt_craft/Validation/validation_scripts/query_14_examples.md",
+    "Prompt_craft/Validation/validation_scripts/query_13_differentiators.md",
+    "Prompt_craft/Validation/validation_scripts/query_12_phase_comparison.md",
+    "Prompt_craft/Validation/validation_scripts/query_11_file_reading.md"
+  ]
+}

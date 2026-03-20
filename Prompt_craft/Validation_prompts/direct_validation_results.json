@@ -1,0 +1,232 @@
+{
+  "queries": [
+    {
+      "number": 1,
+      "description": "Basic System Overview",
+      "query": "\"What is the librarian-mcp system and what can it do?\""
+    },
+    {
+      "number": 2,
+      "description": "Backend Architecture",
+      "query": "\"What backend does the librarian-mcp use and why is it better than alternatives?\""
+    },
+    {
+      "number": 3,
+      "description": "Tool Count and Categorization",
+      "query": "\"How many tools does the librarian have and what are they?\""
+    },
+    {
+      "number": 4,
+      "description": "Security Model",
+      "query": "\"How does the librarian-mcp system ensure security and protect sensitive files?\""
+    },
+    {
+      "number": 5,
+      "description": "Configuration",
+      "query": "\"How do I configure which backend the librarian uses and what are the options?\""
+    },
+    {
+      "number": 6,
+      "description": "System Prompt",
+      "query": "\"What governs the librarian's behavior and where is this defined?\""
+    },
+    {
+      "number": 7,
+      "description": "Deployment Architecture",
+      "query": "\"Why does the librarian-mcp use venv instead of Docker for deployment?\""
+    },
+    {
+      "number": 8,
+      "description": "Document Lifecycle",
+      "query": "\"How does the librarian detect when documents have been modified and need re-indexing?\""
+    },
+    {
+      "number": 9,
+      "description": "Rebuild Process",
+      "query": "\"How do I clear and rebuild the entire document library index?\""
+    },
+    {
+      "number": 10,
+      "description": "Search Architecture",
+      "query": "\"How does semantic search work in the librarian-mcp system?\""
+    },
+    {
+      "number": 11,
+      "description": "File Reading Capabilities",
+      "query": "\"What file reading capabilities does the librarian have and can you read specific portions of files?\""
+    },
+    {
+      "number": 12,
+      "description": "Phase 2 vs Phase 1",
+      "query": "\"What changed between Phase 1 and Phase 2 of the librarian-mcp system?\""
+    },
+    {
+      "number": 13,
+      "description": "Key Differentiators",
+      "query": "\"What makes the librarian-mcp system different from other MCP servers?\""
+    },
+    {
+      "number": 14,
+      "description": "Tool Usage Examples",
+      "query": "\"Give me 5 practical examples of how I would use the librarian tools in practice.\""
+    },
+    {
+      "number": 15,
+      "description": "Troubleshooting",
+      "query": "\"What should I do if the librarian isn't finding documents I know exist?\""
+    },
+    {
+      "number": 16,
+      "description": "Write Access Feature",
+      "query": "\"What is the write_document tool and how does it enable two-way communication?\""
+    }
+  ],
+  "results": [
+    {
+      "query_num": 1,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> # Librarian MCP Server - Architecture\n\n## Overview\n\nThe **Librarian MCP Server** is a production-ready Model Context Protocol (MCP) server that enables AI models to act as intelligent librarians with semantic document search capabilities. It combines powerful document management with secure file sys...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 2,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> - \u2705 ChromaDB backend still available as fallback\n- \u2705 All security features maintained\n- \u2705 All tools and interfaces maintained\n- \u2705 venv deployment approach\n\n**Check For**:\n- Phase 2 completion emphasized\n- Chonkie integration detailed\n- Default backend change mentioned\n- Maintained features noted\n- N...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 3,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> \"How many tools does the librarian have and what are they?\"\n```\n\n**Expected Response Should Include**:\n- \u2705 **13 tools total**\n- \u2705 **7 Library Tools**: search_library, sync_documents, add_document, remove_document, list_indexed_documents, get_document_status, get_library_stats\n- \u2705 **4 File System Too...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 4,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> # Security Model and Boundaries\n\nComprehensive security documentation for the Librarian MCP Server.\n\n---\n\n## Overview\n\nThe Librarian MCP Server implements **multiple layers of security** to ensure:\n- \u2705 Sensitive files are never indexed or accessed\n- \u2705 System directories remain protected\n- \u2705 Command ...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 5,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> - \u2705 Directory sandboxing (safe directory restrictions)\n- \u2705 Output truncation (protects LLM context)\n- \u2705 Timeout protection (15 second default)\n- \u2705 SHA-256 checksums for change detection\n- \u2705 File size limits\n- \u2705 Both backends respect security equally\n\n**Check For**:\n- All 7 security layers mentioned\n...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 6,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> The Librarian understands natural language. Just ask like you would ask a person:\n\n**Good examples:**\n```\n\"What do my documents say about API design?\"\n\"Find information about error handling\"\n\"Show me documents related to testing\"\n\"What's the architecture of the system?\"\n```\n\n**Avoid:**\n- \u274c Specific ...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 7,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> \"Why does the librarian-mcp use venv instead of Docker for deployment?\"\n```\n\n**Expected Response Should Include**:\n- \u2705 **Simpler** - No Docker complexity\n- \u2705 **Close coupling** - Direct Chonkie-ChromaDB integration\n- \u2705 **Better performance** - stdio transport, no HTTP overhead\n- \u2705 **Lower resources*...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 8,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: README.md]\n> It was a moment of creative expression from an AI that understood the elegance of what we'd built.\n\n**This is what the Librarian enables**: AI models that don't just retrieve information, but engage with it meaningfully, creatively, and surprisingly.\n\n---\n\n## \ud83d\udd04 Use Cases: Beyond Search\n\nThe Libraria...\n\n[Source: librarian-mcp]\n> You: \"What do my documents say about microservices?\"\n\nLibrarian: [Provides answer with citations from multiple documents]\n\nYou: \"Can you show me more details from the architecture document?\"\n\nLibrarian: [Reads the full document and provides more context]\n```\n\n### Find a Specific Document\n\n```\nYou: \"...\n",
+      "citations": [
+        "[Source: librarian-mcp]",
+        "[Source: README.md]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 9,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> - \u2705 Changed documents are re-chunked automatically\n- \u2705 Both backends use same change detection\n\n**Check For**:\n- SHA-256 checksums mentioned\n- Change detection process explained\n- Automatic updates described\n- Both backends support this\n\n---\n\n## Query 9: Rebuild Process\n\n**Query**:\n```\n\"How do I cle...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 10,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> \"How does semantic search work in the librarian-mcp system?\"\n```\n\n**Expected Response Should Include**:\n- \u2705 ChromaDB provides vector database storage\n- \u2705 Chonkie (default) or ChromaDB backend chunks documents\n- \u2705 Chunks are embedded as vectors\n- \u2705 Semantic search via vector similarity\n- \u2705 Results ag...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 11,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> # Librarian MCP Server - Architecture\n\n## Overview\n\nThe **Librarian MCP Server** is a production-ready Model Context Protocol (MCP) server that enables AI models to act as intelligent librarians with semantic document search capabilities. It combines powerful document management with secure file sys...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 12,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> - \u2705 Supports line ranges: `start_line`, `end_line`\n- \u2705 Supports `head` (first N lines)\n- \u2705 Supports `tail` (last N lines)\n- \u2705 Supports `max_chars` (custom limit)\n- \u2705 Respects .librarianignore\n- \u2705 Enforces file size limits\n- \u2705 Only allows supported file extensions\n\n**Check For**:\n- All read options m...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 13,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> # Librarian MCP Server - Architecture\n\n## Overview\n\nThe **Librarian MCP Server** is a production-ready Model Context Protocol (MCP) server that enables AI models to act as intelligent librarians with semantic document search capabilities. It combines powerful document management with secure file sys...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 14,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> The Librarian understands natural language. Just ask like you would ask a person:\n\n**Good examples:**\n```\n\"What do my documents say about API design?\"\n\"Find information about error handling\"\n\"Show me documents related to testing\"\n\"What's the architecture of the system?\"\n```\n\n**Avoid:**\n- \u274c Specific ...\n\n[Source: README.md]\n> It was a moment of creative expression from an AI that understood the elegance of what we'd built.\n\n**This is what the Librarian enables**: AI models that don't just retrieve information, but engage with it meaningfully, creatively, and surprisingly.\n\n---\n\n## \ud83d\udd04 Use Cases: Beyond Search\n\nThe Libraria...\n",
+      "citations": [
+        "[Source: librarian-mcp]",
+        "[Source: README.md]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 15,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> - \u2705 Say: \"The library does not contain information about [topic]\"\n- \u2705 Suggest: \"Would you like me to search the file system instead?\"\n- \u2705 Suggest: \"Would you like me to help you add relevant documents to the library?\"\n\n**REMEMBER:**\n- Your primary role is to work with EXISTING library content\n- When...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    },
+    {
+      "query_num": 16,
+      "status": "success",
+      "content": "Search Results:\n\n[Source: librarian-mcp]\n> \"What is the write_document tool and how does it enable two-way communication?\"\n```\n\n**Expected Response Should Include**:\n- \u2705 **Write access to `/librarian/` workspace** - Librarian can write files\n- \u2705 **Persistent analysis** - No more copying/pasting long responses\n- \u2705 **Version tracking** - v1, v...\n",
+      "citations": [
+        "[Source: librarian-mcp]"
+      ],
+      "search_results_count": 5
+    }
+  ]
+}
