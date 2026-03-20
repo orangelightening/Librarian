@@ -80,18 +80,32 @@ def register_library_tools(mcp):
             ai_layer = get_ai_layer()
 
             results = backend.query(query_text=query, limit=limit)
+
+            # Ensure results is a list, not None
+            if results is None:
+                results = []
+
             aggregated = ai_layer.aggregate_results(results, query)
 
-            response = f"Found {aggregated['num_chunks']} relevant chunks.\n\n"
-            response += aggregated['response']
+            # Ensure aggregated is valid
+            if not aggregated or not isinstance(aggregated, dict):
+                return "Search failed: Invalid response from aggregator"
 
-            if aggregated.get('citations'):
-                response += "\n\n**Sources:**\n" + "\n".join(aggregated['citations'])
+            num_chunks = aggregated.get('num_chunks', 0)
+            response_text = aggregated.get('response', 'No response text available')
+            citations = aggregated.get('citations', [])
+
+            response = f"Found {num_chunks} relevant chunks.\n\n{response_text}"
+
+            if citations:
+                response += "\n\n**Sources:**\n" + "\n".join(citations)
 
             return response
 
         except Exception as e:
-            return f"Search failed: {str(e)}"
+            import traceback
+            error_details = f"{str(e)}\n\n{traceback.format_exc()}"
+            return f"Search failed: {error_details}"
 
     @mcp.tool()
     def sync_documents(path: str, extensions: str = None, recursive: bool = True) -> str:
