@@ -17,6 +17,37 @@ Imagine having a senior analyst who:
 
 ---
 
+## It's a Conversation, Not Just a Search
+
+**Turn your chat window into a two-way dialogue with your entire library.**
+
+Unlike traditional search where you get isolated results, the Librarian maintains **persistent context across your entire conversation**:
+
+```
+You: What does the librarian system do?
+Librarian: [Explains system capabilities with citations]
+
+You: How does the backend work?
+Librarian: [Explains Chonkie vs ChromaDB, recalls you asked about capabilities]
+
+You: What tools does it have?
+Librarian: [Lists 14 tools, references earlier backend discussion]
+
+You: Can you write documents?
+Librarian: [Explains write_document feature, connects to tools discussion]
+
+You: Is it secure?
+Librarian: [Describes 7 security layers, references earlier tools and write access]
+```
+
+**The Librarian remembers everything you've discussed** - building on previous questions, connecting concepts, and providing increasingly detailed answers as your conversation progresses.
+
+**Your chat window becomes the interface** to your entire knowledge base. Ask, refine, ask follow-ups, dig deeper - the Librarian maintains context and provides increasingly sophisticated insights.
+
+**Works in Jan, LM Studio, Claude Desktop** - your AI chat becomes your librarian interface.
+
+---
+
 ## What Makes It Different?
 
 **Most MCP servers** give you one-way tools - you ask, they respond.
