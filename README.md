@@ -1,15 +1,17 @@
 # Librarian MCP Server
 
-**Transform your AI model into an intelligent coding partner that doesn't just find information - it actively helps you write better software.**
+**Transform your AI model into an intelligent research assistant that doesn't just search your documents - it actively helps you understand, analyze, and improve them.**
 
-Imagine having a senior developer who:
-- 📚 **Read your entire codebase** in seconds and remembers everything
-- 🔍 **Finds bugs** you didn't know existed
+Imagine having a senior analyst who:
+- 📚 **Read your entire document library** in seconds and remembers everything
+- 🔍 **Finds insights** you didn't know existed
 - ✍️ **Writes analysis reports** you can review and apply
 - 🎯 **Validates your documentation** against reality
-- 🔒 **Executes commands safely** (without risking your system)
+- 🔒 **Works completely locally** (your data never leaves your machine)
 
-**This isn't just search - it's a two-way conversation with your codebase.**
+**Works on code repositories, research papers, corporate policies, medical records, customer data, or any document collection.**
+
+**This isn't just search - it's a two-way conversation with your documents.**
 
 **Status**: Phase 2 Complete ✅ | **Default Backend**: Chonkie (Intelligent Chunking) | **14 Production Tools**
 
@@ -19,17 +21,19 @@ Imagine having a senior developer who:
 
 **Most MCP servers** give you one-way tools - you ask, they respond.
 
-**The Librarian** gives you a complete development workflow:
+**The Librarian** gives you a complete, secure, local development workflow:
 
 1. **Search** your documents semantically (not just text matching)
 2. **Investigate** code across multiple files with citations
-3. **Write detailed reports** to `/librarian/` for your review
+3. **Write detailed reports** to `/librarian/` for your review (sandboxed)
 4. **Validate** your documentation against actual implementation
 5. **Improve** your codebase through systematic analysis
 
 **Example**: Ask it to find all exception handling bugs in your backend code. It searches, analyzes patterns, writes a detailed report to `/librarian/backend-analysis.md` with file paths and line numbers, and waits for you to review and apply the changes. That's the difference.
 
 **Works with**: Jan, LM Studio, Claude Desktop, and any MCP-compatible client.
+
+**Runs on**: Local models (Qwen, GLM, Llama) or cloud models (Claude, GPT) - your choice, your data stays yours.
 
 ---
 
@@ -50,6 +54,61 @@ Imagine having a senior developer who:
 - 📚 **Documentation**: "Validate README matches implementation" → Finds discrepancies
 - 🔍 **Investigation**: "Where is timeout configuration set?" → Traces across all files
 - ✅ **Validation**: "Run all 16 validation queries" → Self-checks documentation accuracy
+
+---
+
+## Privacy & Security First
+
+### 🔒 Your Data Stays Yours
+
+**Run entirely locally** with your choice of AI models:
+- **Jan** - Local models like Qwen, GLM, Llama
+- **LM Studio** - Your local model collection
+- **Claude Desktop** - Cloud or local models
+- **Any MCP client** - You control the model
+
+**No API calls required.** No data leaves your machine. Your codebase never leaves your control.
+
+### 🛡️ Sandboxed Safety
+
+**Write access is strictly controlled:**
+- ✅ **Can write to:** `/librarian/` workspace only
+- ❌ **Cannot write to:** Your source code, configuration files, or any library files
+- 🔒 **7 layers of protection** - Path validation, filename blocking, size limits, audit logging
+- ✅ **You review first** - Librarian writes reports, YOU decide what to apply
+
+**The library is read-only.** The Librarian can search and analyze but never modify your documents or code.
+
+### 📚 Works on ANY Document Collection
+
+**Not just code repositories:**
+- 📖 **Research papers** - Find connections across academic literature
+- 🏥 **Medical records** - Compliance analysis (local only!)
+- 💼 **Corporate policies** - Validate procedures against guidelines
+- 📝 **Your Obsidian vault** - Personal knowledge management
+- 🗃️ **Customer records** - Business intelligence (local only!)
+- 🎨 **Design specs** - Cross-reference documentation
+- 📊 **Financial data** - Analysis without data leaving your premises
+
+**A library is any collection of documents.** The Librarian makes it searchable, analyzable, and actionable.
+
+### Why This Matters
+
+**❌ Traditional AI assistants:**
+- Send your code to cloud APIs
+- You hope they don't train on your data
+- Can't write files (security risk)
+- Forget context between conversations
+- Can't verify their answers
+
+**✅ The Librarian:**
+- **100% local** - Your data never leaves your machine
+- **Sandboxed write access** - Can only write to `/librarian/` workspace
+- **Always cites sources** - Verify every claim
+- **Remembers everything** - Entire library in context
+- **Two-way communication** - Writes reports you can review
+
+**Result:** You get AI-powered code analysis with enterprise-grade security and complete data privacy.
 
 ---
 
