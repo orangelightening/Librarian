@@ -4,17 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "26854352f469a406",
+        "id": "c29bc8aeced2d1d8",
         "type": "tabs",
         "children": [
           {
-            "id": "b67fff621ca5b13d",
+            "id": "7ca421301a3bfd0f",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Prompt_craft/System_prompts/Archive/System_prompt.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "System_prompt"
             }
           }
         ]
@@ -181,7 +185,28 @@
   },
   "active": "e692e867f9282c39",
   "lastOpenFiles": [
-    "Prompt_craft/System_prompts/System_prompt.md",
+    "System_prompt.md",
+    "Prompt_craft/System_prompts/active",
+    "Prompt_craft/System_prompts/active/System_prompt.md",
+    "Prompt_craft/System_prompts/Archive",
+    "Social_Media_Posts.md",
+    "QUICKSTART.md",
+    "chroma_db/chroma.sqlite3-journal",
+    "chroma_db/1c32cd96-f4ff-4a83-b31a-dbff0c2af92e/link_lists.bin",
+    "chroma_db/1c32cd96-f4ff-4a83-b31a-dbff0c2af92e/length.bin",
+    "chroma_db/1c32cd96-f4ff-4a83-b31a-dbff0c2af92e/header.bin",
+    "chroma_db/1c32cd96-f4ff-4a83-b31a-dbff0c2af92e/data_level0.bin",
+    "chroma_db/1c32cd96-f4ff-4a83-b31a-dbff0c2af92e",
+    "metadata/index.json",
+    "chroma_db/chroma.sqlite3",
+    "README.md",
+    "Prompt_craft/Specialist_prompts/debugging_analyst_prompt.md",
+    "Use_cases/obsidian_vault_knowledge.md",
+    "Use_cases/legal_contract_review.md",
+    "Use_cases/medical_records_compliance.md",
+    "Prompt_craft/prompting_suggestions.md",
+    "guide_them.md",
+    "Prompt_craft/System_prompts/Archive/System_prompt.md",
     "Prompt_craft/Validation_prompts/validation_scripts/sequencing_scripts.md",
     "Prompt_craft/Validation_prompts/validation_scripts/query_16_write_access.md",
     "Prompt_craft/Validation_prompts/validation_scripts/query_15_troubleshooting.md",
@@ -195,27 +220,6 @@
     "Prompt_craft/Validation_prompts/validation_scripts/query_07_deployment.md",
     "Prompt_craft/Validation_prompts/validation_scripts/batch6_prompt.md",
     "Prompt_craft/Validation_prompts/validation_scripts/batch5_prompt.md",
-    "Prompt_craft/Validation_prompts/validation_scripts/batch4_prompt.md",
-    "Prompt_craft/Validation_prompts/validation_scripts/batch2_prompt.md",
-    "Prompt_craft/Validation_prompts/validation_scripts/batch3_prompt.md",
-    "Prompt_craft/Validation_prompts/validation_scripts/batch1_prompt.md",
-    "Prompt_craft/Validation_prompts/validation_with_tool_execution.json",
-    "Prompt_craft/Validation_prompts/validation_scripts",
-    "Prompt_craft/Validation_prompts/validation_results.json",
-    "Prompt_craft/Validation_prompts/validation_debug.log",
-    "Prompt_craft/Validation_prompts/direct_validation_results.json",
-    "Prompt_craft/Validation_prompts/batch1_prompt.txt",
-    "Prompt_craft/Validation_prompts",
-    "Prompt_craft/Specialist_prompts",
-    "Prompt_craft/System_prompts/guide_them.md",
-    "Prompt_craft/System_prompts",
-    "Prompt_craft/Validation/batch1_prompt.txt",
-    "Prompt_craft/Validation/validation_scripts/sequencing_scripts.md",
-    "Prompt_craft/Validation/validation_scripts/query_16_write_access.md",
-    "Prompt_craft/Validation/validation_scripts/query_15_troubleshooting.md",
-    "Prompt_craft/Validation/validation_scripts/query_14_examples.md",
-    "Prompt_craft/Validation/validation_scripts/query_13_differentiators.md",
-    "Prompt_craft/Validation/validation_scripts/query_12_phase_comparison.md",
-    "Prompt_craft/Validation/validation_scripts/query_11_file_reading.md"
+    "Prompt_craft/Validation_prompts/validation_scripts/batch4_prompt.md"
   ]
 }
