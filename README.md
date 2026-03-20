@@ -23,7 +23,7 @@ Imagine having a senior analyst who:
 
 **1. Install** (one command)
 ```bash
-git clone https://github.com/orgelightening/Librarian.git
+git clone https://github.com/orangelightening/Librarian.git
 cd Librarian
 ./install.sh  # Outputs correct config for your client
 ```
@@ -659,7 +659,7 @@ We chose venv over Docker for good reasons:
 
 **Apache License 2.0**
 
-Copyright 2025 Peter (Librarian MCP Server Contributors)
+Copyright 2026 Peter (Librarian MCP Server Contributors)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
