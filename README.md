@@ -1,6 +1,6 @@
 # Librarian MCP Server
 
-**Transform your AI model into an intelligent research assistant that doesn't just search your documents - it actively helps you understand, analyze, and improve them.**
+**Transform Jan, LM Studio, or Claude Desktop into an intelligent research assistant that doesn't just search your documents - it discusses them with you and actively helps you understand, analyze, and improve them.**
 
 Imagine having a senior analyst who:
 - 📚 **Read your entire document library** in seconds and remembers everything
@@ -11,9 +11,32 @@ Imagine having a senior analyst who:
 
 **Works on code repositories, research papers, corporate policies, medical records, customer data, or any document collection.**
 
+**What is an MCP?** The Model Context Protocol is a standard that lets AI servers plug into any MCP-compatible client (Jan, LM Studio, Claude Desktop) with zero configuration. One install script, copy-paste the config, and you're done.
+
 **This isn't just search - it's a two-way conversation with your documents.**
 
 **Status**: Phase 2 Complete ✅ | **Default Backend**: Chonkie (Intelligent Chunking) | **14 Production Tools**
+
+---
+
+## Quick Start: 3 Steps to Librarian-Powered AI
+
+**1. Install** (one command)
+```bash
+git clone https://github.com/orgelightening/Librarian.git
+cd Librarian
+./install.sh  # Outputs correct config for your client
+```
+
+**2. Configure** (copy-paste)
+- **Jan AI** → Settings → MCP Servers → Add Server
+- **LM Studio** → Settings → MCP Servers → Add Server
+- **Claude Desktop** → Config → MCP Servers → Add Server
+
+**3. Chat** (that's it)
+Open a new chat, and your AI model now has a Librarian.
+
+**⚡ That's it.** You're now having a two-way conversation with your entire document library.
 
 ---
 
