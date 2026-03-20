@@ -21,13 +21,14 @@ Imagine having a senior analyst who:
 
 **Most MCP servers** give you one-way tools - you ask, they respond.
 
-**The Librarian** gives you a complete, secure, local development workflow:
+**The Librarian** gives you a complete, secure, local development workflow with **specialist personas**:
 
 1. **Search** your documents semantically (not just text matching)
 2. **Investigate** code across multiple files with citations
 3. **Write detailed reports** to `/librarian/` for your review (sandboxed)
 4. **Validate** your documentation against actual implementation
 5. **Improve** your codebase through systematic analysis
+6. **Adopt specialist personas** - Debugging analyst, compliance expert, legal analyst, knowledge synthesizer, and more
 
 **Example**: Ask it to find all exception handling bugs in your backend code. It searches, analyzes patterns, writes a detailed report to `/librarian/backend-analysis.md` with file paths and line numbers, and waits for you to review and apply the changes. That's the difference.
 
