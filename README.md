@@ -33,7 +33,7 @@ Imagine having a senior analyst who:
 
 **Works with**: Jan, LM Studio, Claude Desktop, and any MCP-compatible client.
 
-**Runs on**: Local models (Qwen, GLM, Llama) or cloud models (Claude, GPT) - your choice, your data stays yours.
+**Runs on**: Local models (Qwen3.5 4b 4 bit,  Llama)  your choice, your data stays yours and never leaves your computer. Cloud models If  you prefer but with less security,
 
 ---
 
