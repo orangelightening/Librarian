@@ -686,6 +686,7 @@ limitations under the License.
 **Questions**: The librarian itself is your best resource - it has complete access to all documentation!
 
 ---
+Built with the assistance of GLM-4.7 (primary development assistant), Claude Sonnet 4.6 in Claude chat (mentor and adviser), tested extensively against Qwen3.5 4B and 9B local models.
 
 **The Librarian: Your AI research assistant, powered by intelligent semantic search.** 📚✨
 
