@@ -6,7 +6,7 @@ The **Librarian MCP Server** is a production-ready Model Context Protocol (MCP) 
 
 **Status**: Phase 2 Complete ✅ | **14 MCP Tools** (7 library + 5 file system + 2 system)
 
-**System Prompt**: All librarian behavior is governed by `prompt.md` - a comprehensive system prompt that defines the librarian's role, behavioral principles, citation requirements, and security boundaries. This prompt ensures consistent, accurate, and well-cited responses.
+**System Prompt**: All librarian behavior is governed by `System_prompt.md` - a comprehensive system prompt that defines the librarian's role, behavioral principles, citation requirements, and security boundaries. This prompt ensures consistent, accurate, and well-cited responses.
 
 **NEW: Two-Way Communication**: The librarian can write analysis results, code changes, and documentation updates to `/librarian/` workspace, enabling persistent task delegation and iterative refinement.
 

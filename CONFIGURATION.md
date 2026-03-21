@@ -6,7 +6,7 @@ Complete configuration guide for the Librarian MCP Server.
 
 ## System Prompt
 
-The librarian's behavior is defined by `prompt.md` in the project root. This comprehensive system prompt specifies:
+The librarian's behavior is defined by `System_prompt.md` in the project root. This comprehensive system prompt specifies:
 
 - **Role Definition**: AI model acts as an intelligent research assistant
 - **Core Principles**: Accuracy with citations, transparency, respecting boundaries
@@ -14,7 +14,7 @@ The librarian's behavior is defined by `prompt.md` in the project root. This com
 - **Security Rules**: What not to access, how to handle sensitive data
 - **Response Format**: How to structure answers with proper citations
 
-**The system prompt is automatically loaded by the MCP server** - you don't need to manually configure it. If you want to modify the librarian's behavior, edit `prompt.md` and restart the server.
+**The system prompt is automatically loaded by the MCP server** - you don't need to manually configure it. If you want to modify the librarian's behavior, edit `System_prompt.md` and restart the server.
 
 ## Quick Configuration
 
