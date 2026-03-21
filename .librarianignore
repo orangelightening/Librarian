@@ -144,6 +144,12 @@ Librarian_poetry/
 # Phase 2 implementation planning (internal reference, not content)
 PHASE2/
 
+# Prompt crafting and specialist prompts (internal reference, not content)
+Prompt_craft/
+
+# Bug reports and issue tracking (internal reference, not content)
+bugs.md
+
 # System prompts and configuration (human reference only)
 # These files define the model's behavior and should not be indexed as content
 prompt.md
