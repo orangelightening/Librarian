@@ -78,3 +78,9 @@ credentials.*
 id_rsa
 id_ed25519
 Social_Media_Posts.md
+
+# Obsidian workspace (user-specific)
+.obsidian/
+
+# Archived documentation (internal reference)
+.old-docs/
