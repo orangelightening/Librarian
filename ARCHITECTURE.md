@@ -610,7 +610,7 @@ MAX_DOCUMENT_SIZE = 10MB  # Prevent oversized documents
 
 ---
 
-## MCP Tools (13 Total)
+## MCP Tools (14 Total)
 
 ### Library Tools (7)
 1. `search_library(query, limit)` - Semantic search

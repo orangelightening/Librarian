@@ -179,7 +179,7 @@ The Librarian MCP Server turns AI models into research assistants who can:
 
 **Beyond Search**: The librarian also serves as a **debugging assistant**, **documentation validator**, and **code investigator** - helping you maintain, validate, and improve your codebase through dialogue and systematic analysis.
 
-**System Prompt**: The librarian's behavior is defined by `prompt.md` - a comprehensive system prompt that ensures accurate, cited responses with clear behavioral guidelines.
+**System Prompt**: The librarian's behavior is defined by `System_prompt.md` - a comprehensive system prompt that ensures accurate, cited responses with clear behavioral guidelines.
 
 ---
 
@@ -340,12 +340,13 @@ export LIBRARIAN_BACKEND=chroma
 | `get_document_status(path)` | Check if document is current |
 | `get_library_stats()` | Get library statistics |
 
-### CLI Tools (6)
+### CLI Tools (7)
 
 | Tool | Purpose |
 |------|---------|
 | `execute_command(command, args, cwd)` | Execute whitelisted commands |
 | `read_document(path, start_line, end_line, head, tail)` | Read files with ranges |
+| `write_document(path, content, create_dirs)` | Write files to `/librarian/` workspace |
 | `list_documents(path, extension, recursive)` | List files in directory |
 | `search_documents(query, path, extension)` | Literal text search |
 | `document_summary(path)` | Get file overview |

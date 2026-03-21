@@ -40,7 +40,7 @@ The AI model receives a comprehensive system prompt that defines behavioral boun
 ❌ DON'T EVER hallucinate or make up information when data is insufficient
 ```
 
-**Source**: See `mcp_server/config/librarian_prompt.py`
+**Source**: See `System_prompt.md` in the project root
 
 ---
 
@@ -320,7 +320,7 @@ export LIBRARIAN_MAX_DOCUMENT_SIZE=50000000  # 50 MB
 
 ## MCP Tools Security
 
-### Tool Count: 13 Total
+### Tool Count: 14 Total
 
 **Library Tools** (7):
 1. `search_library(query, limit)` - Semantic search (respects .librarianignore)
