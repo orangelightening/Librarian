@@ -697,8 +697,8 @@ mcp_server/
 # Backend selection (chonkie = default, chroma = optional)
 export LIBRARIAN_BACKEND=chonkie
 
-# Directory configuration
-export LIBRARIAN_SAFE_DIR=/home/peter/development
+# Directory configuration (overrides defaults: $HOME, ./documents, ./chroma_db, ./metadata)
+export LIBRARIAN_SAFE_DIR=/home/peter/development/librarian-mcp
 export LIBRARIAN_DOCUMENTS_DIR=./documents
 export LIBRARIAN_CHROMA_PATH=./chroma_db
 export LIBRARIAN_METADATA_PATH=./metadata

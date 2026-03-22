@@ -62,7 +62,7 @@ export LIBRARIAN_BACKEND=chonkie
 
 **Example**:
 ```bash
-export LIBRARIAN_SAFE_DIR=/home/peter/development
+export LIBRARIAN_SAFE_DIR=/home/peter/development/librarian-mcp
 ```
 
 **Notes**:
@@ -277,9 +277,9 @@ Configuration is applied in this order (later overrides earlier):
 **Example**:
 ```bash
 # Code default: SAFE_DIR = $HOME
-# Environment: LIBRARIAN_SAFE_DIR=/home/peter/docs
-# Command-line: --safe-dir /home/peter/current
-# Final value: /home/peter/current (command-line wins)
+# Environment: LIBRARIAN_SAFE_DIR=/home/peter/development/librarian-mcp
+# Command-line: --safe-dir /home/peter/development/librarian-mcp
+# Final value: /home/peter/development/librarian-mcp (command-line wins)
 ```
 
 ---
@@ -483,7 +483,7 @@ pip install -r requirements.txt
 # Use Chonkie backend (default)
 export LIBRARIAN_BACKEND=chonkie
 
-# Safe directory is current project
+# Safe directory is current project (overrides default: $HOME)
 export LIBRARIAN_SAFE_DIR=/home/peter/development/librarian-mcp
 
 # Smaller chunks for testing

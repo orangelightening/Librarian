@@ -216,9 +216,13 @@ The Librarian MCP Server turns AI models into research assistants who can:
 - **💡 See "Use Cases" section below for practical examples**
 
 ### 📖 14 MCP Tools
-- **7 Library Tools**: Search, sync, add, remove, list, status, stats
-- **5 File System Tools**: Read documents, write documents, list docs, search contents, summarize
-- **2 System Tools**: Execute commands, server info
+
+**Librarian provides tools for**:
+- Document library management (search, sync, add, remove, list)
+- Secure file system access (read, write, list, search)
+- System operations (execute commands, server info)
+
+**See [ARCHITECTURE.md](ARCHITECTURE.md) for complete tool reference with descriptions.**
 
 ### 🐍 Why venv Instead of Docker?
 

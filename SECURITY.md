@@ -320,9 +320,9 @@ export LIBRARIAN_MAX_DOCUMENT_SIZE=50000000  # 50 MB
 
 ## MCP Tools Security
 
-### Tool Count: 14 Total
+**See [ARCHITECTURE.md](ARCHITECTURE.md) for complete tool reference.**
 
-**Library Tools** (7):
+**Library Tools**:
 1. `search_library(query, limit)` - Semantic search (respects .librarianignore)
 2. `sync_documents(path, extensions, recursive)` - Sync (respects .librarianignore)
 3. `add_document(path)` - Add document (respects .librarianignore)
@@ -331,7 +331,7 @@ export LIBRARIAN_MAX_DOCUMENT_SIZE=50000000  # 50 MB
 6. `get_document_status(path)` - Check status
 7. `get_library_stats()` - Get statistics
 
-**CLI Tools** (7):
+**CLI Tools**:
 1. `execute_command(command, args, cwd)` - Whitelisted commands only
 2. `read_document(path, start_line, end_line, head, tail, max_chars)` - Sandboxed reads
 3. `write_document(path, content, create_dirs)` - **Writes to `/librarian/` subdirectory only**
@@ -340,7 +340,7 @@ export LIBRARIAN_MAX_DOCUMENT_SIZE=50000000  # 50 MB
 6. `document_summary(path)` - Sandboxed summaries
 7. `server_info()` - Show configuration
 
-**All 14 tools respect security boundaries equally, regardless of backend.**
+**All tools respect security boundaries equally, regardless of backend.**
 
 ---
 
