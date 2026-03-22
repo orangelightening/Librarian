@@ -25,8 +25,8 @@ echo ""
 
 # Check if LIBRARIAN_BACKEND is set
 if [ -z "$LIBRARIAN_BACKEND" ]; then
-    echo "⚠️  LIBRARIAN_BACKEND not set (defaulting to chroma)"
-    echo "💡 Set with: export LIBRARIAN_BACKEND=chonkie"
+    echo "⚠️  LIBRARIAN_BACKEND not set (defaulting to chonkie)"
+    echo "💡 Override with: export LIBRARIAN_BACKEND=chroma"
     echo ""
 fi
 
@@ -57,7 +57,7 @@ echo ""
 
 echo "Step 2: Rebuilding library..."
 echo "----------------------------------------------------------------------"
-echo "Backend: ${LIBRARIAN_BACKEND:-chroma (default)}"
+echo "Backend: ${LIBRARIAN_BACKEND:-chonkie (default)}"
 echo ""
 
 # Activate virtual environment
