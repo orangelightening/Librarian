@@ -15,7 +15,7 @@ Imagine having a senior analyst who:
 
 **This isn't just search - it's a two-way conversation with your documents.**
 
-**Status**: Phase 2 Complete ✅ | **Default Backend**: Chonkie (Intelligent Chunking) | **14 Production Tools**
+**Status**: v0.3.0 ✅ | **Default Backend**: Chonkie (PDF + Semantic Chunking) | **Multi-Library Support** | **14 Production Tools**
 
 ---
 
@@ -223,6 +223,38 @@ The Librarian MCP Server turns AI models into research assistants who can:
 - System operations (execute commands, server info)
 
 **See [ARCHITECTURE.md](ARCHITECTURE.md) for complete tool reference with descriptions.**
+
+### 📚 Multi-Library Support (NEW!)
+
+**Manage multiple independent document collections** - each library is isolated with its own data directory and semantic index.
+
+**Use Cases:**
+- **Dev Library**: Code documentation and technical specs
+- **Research Library**: Academic papers and research articles
+- **Botany Library**: Agricultural science PDFs
+- **Recipe Library**: Cookbooks and recipes
+
+**Each library has:**
+- Isolated `.librarian/` directory (ChromaDB + metadata)
+- Independent document collection
+- Separate semantic search index
+
+**Setup:** Create multiple MCP server configs, one per library. See `docs/MULTI_LIBRARY_SETUP.md` for details.
+
+### 📄 PDF Support (NEW!)
+
+**Full PDF processing with Chonkie backend:**
+- **Text extraction**: pypdf (fast) with docling fallback (OCR support)
+- **Semantic chunking**: Intelligent splitting based on content coherence
+- **Table handling**: Preserves table structures from PDFs
+- **Multi-page**: Processes entire PDFs automatically
+
+**Supported file types:**
+- **Documents**: `.pdf`, `.docx`, `.md`, `.txt`, `.rst`, `.html`
+- **Code**: `.py`, `.js`, `.ts`, `.json`
+- **Config**: `.yaml`, `.yml`, `.toml`
+
+**Example**: Index your entire PDF library and ask questions across all documents.
 
 ### 🐍 Why venv Instead of Docker?
 

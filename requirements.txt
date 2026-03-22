@@ -9,5 +9,9 @@ chromadb>=0.4.0
 # Phase 2: Chonkie Integration (intelligent chunking)
 chonkie[all]>=1.6.0  # Includes all optional dependencies for full functionality
 
+# PDF Processing
+pypdf>=6.0.0  # Fast PDF text extraction
+# docling is included in chonkie[all] for OCR fallback
+
 # Environment variable management
 python-dotenv>=1.0.0

@@ -27,7 +27,7 @@ BANNED_FLAG_COMBOS = {
     ("awk", "systime"),
 }
 
-DOCUMENT_EXTENSIONS = {".md", ".txt", ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".toml", ".rst", ".html"}
+DOCUMENT_EXTENSIONS = {".pdf", ".docx", ".md", ".txt", ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".toml", ".rst", ".html"}
 
 
 def is_safe_command(cmd: str, args: list) -> tuple[bool, str]:

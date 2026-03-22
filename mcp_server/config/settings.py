@@ -38,8 +38,8 @@ class Settings:
     MAX_DOCUMENT_SIZE = int(os.getenv("LIBRARIAN_MAX_DOCUMENT_SIZE", "10000000"))  # 10MB
     CHUNK_SIZE = int(os.getenv("LIBRARIAN_CHUNK_SIZE", "1000"))
 
-    # Allowed document extensions
-    DEFAULT_EXTENSIONS: Set[str] = {".md", ".txt", ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".toml", ".rst", ".html"}
+    # Allowed document extensions (Chonkie supports all these)
+    DEFAULT_EXTENSIONS: Set[str] = {".pdf", ".docx", ".md", ".txt", ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".toml", ".rst", ".html"}
 
     # Security
     MAX_OUTPUT_CHARS = int(os.getenv("LIBRARIAN_MAX_OUTPUT_CHARS", "8000"))
