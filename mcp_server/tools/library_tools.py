@@ -20,14 +20,19 @@ def get_backend():
     """Get or create backend instance based on settings."""
     global _backend
     if _backend is None:
-        from ..config.settings import settings
-        from ..backend.factory import get_backend as create_backend
+        try:
+            from ..config.settings import settings
+            from ..backend.factory import get_backend as create_backend
 
-        _backend = create_backend(
-            backend_type=settings.BACKEND,
-            collection_name=settings.CHROMA_COLLECTION,
-            db_path=settings.CHROMA_PATH
-        )
+            _backend = create_backend(
+                backend_type=settings.BACKEND,
+                collection_name=settings.CHROMA_COLLECTION,
+                db_path=settings.CHROMA_PATH
+            )
+        except Exception as e:
+            # Reset state on failure so subsequent calls will retry
+            _backend = None
+            raise RuntimeError(f"Failed to initialize backend: {e}") from e
     return _backend
 
 

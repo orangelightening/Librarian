@@ -25,8 +25,11 @@ class Settings:
     # Metadata storage
     METADATA_PATH = os.getenv("LIBRARIAN_METADATA_PATH", str(PROJECT_ROOT / "metadata"))
 
-    # Backend selection
-    BACKEND: Literal["chroma", "chonkie"] = os.getenv("LIBRARIAN_BACKEND", "chonkie")
+    # Backend selection (with validation)
+    _backend_env = os.getenv("LIBRARIAN_BACKEND", "chonkie")
+    if _backend_env not in ("chroma", "chonkie"):
+        raise ValueError(f"Invalid LIBRARIAN_BACKEND value: '{_backend_env}'. Must be 'chroma' or 'chonkie'.")
+    BACKEND: Literal["chroma", "chonkie"] = _backend_env  # type: ignore
 
     # Chonkie (Phase 2)
     CHONKIE_URL = os.getenv("LIBRARIAN_CHONKIE_URL", "http://localhost:8000")

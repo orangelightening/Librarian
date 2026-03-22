@@ -81,6 +81,10 @@ class ChromaBackend(DocumentBackend):
             metadata={"hnsw:space": "cosine"}
         )
 
+        # Collect all chunks first for batch operation
+        all_chunks = []
+        all_ids = []
+        all_metadatas = []
         processed_chunks = []
 
         for doc_id, doc_text in zip(document_ids, documents):
@@ -98,21 +102,39 @@ class ChromaBackend(DocumentBackend):
                     "document_name": source
                 }
 
-                try:
-                    collection.add(
-                        documents=[chunk_text],
-                        ids=[chunk_id],
-                        metadatas=[metadata]
-                    )
+                all_chunks.append(chunk_text)
+                all_ids.append(chunk_id)
+                all_metadatas.append(metadata)
 
-                    processed_chunks.append({
-                        "id": chunk_id,
-                        "text": chunk_text,
-                        "metadata": metadata
-                    })
-                except Exception as e:
-                    print(f"Error adding chunk {chunk_id}: {e}")
-                    continue
+                # Track for return value
+                processed_chunks.append({
+                    "id": chunk_id,
+                    "text": chunk_text,
+                    "metadata": metadata
+                })
+
+        # Batch add all chunks at once (much more efficient)
+        if all_chunks:
+            try:
+                collection.add(
+                    documents=all_chunks,
+                    ids=all_ids,
+                    metadatas=all_metadatas
+                )
+            except Exception as e:
+                print(f"Error adding chunks in batch: {e}")
+                # Fall back to individual adds if batch fails
+                for i, (chunk_text, chunk_id, metadata) in enumerate(zip(all_chunks, all_ids, all_metadatas)):
+                    try:
+                        collection.add(
+                            documents=[chunk_text],
+                            ids=[chunk_id],
+                            metadatas=[metadata]
+                        )
+                    except Exception as e2:
+                        print(f"Error adding chunk {chunk_id}: {e2}")
+                        # Remove from processed_chunks if it failed
+                        processed_chunks = [c for c in processed_chunks if c['id'] != chunk_id]
 
         return processed_chunks
 

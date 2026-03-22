@@ -2,6 +2,8 @@
 Metadata Store - Tracks processed documents.
 """
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import List, Dict, Optional
 from datetime import datetime
@@ -36,12 +38,31 @@ class MetadataStore:
         return {}
 
     def _save_index(self):
-        """Save index to disk."""
+        """Save index to disk using atomic write (temp file + rename)."""
         try:
-            with open(self.index_file, 'w') as f:
-                json.dump(self._index, f, indent=2)
+            # Write to temporary file first
+            dir_path = os.path.dirname(self.index_file)
+            with tempfile.NamedTemporaryFile(
+                mode='w',
+                dir=dir_path,
+                prefix='.index_',
+                suffix='.tmp',
+                delete=False
+            ) as tmp_file:
+                json.dump(self._index, tmp_file, indent=2)
+                tmp_path = tmp_file.name
+
+            # Atomic rename (overwrites target if exists)
+            os.rename(tmp_path, self.index_file)
+
         except Exception as e:
             print(f"Error saving metadata index: {e}")
+            # Clean up temp file if it exists
+            if 'tmp_path' in locals() and os.path.exists(tmp_path):
+                try:
+                    os.unlink(tmp_path)
+                except:
+                    pass
 
     def add(self, metadata: Dict):
         """
