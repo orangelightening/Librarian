@@ -53,6 +53,65 @@ Jan maintains the MCP server connection in memory. When you rebuild the library:
 
 ---
 
+## Multi-MCP Configuration
+
+### ⚠️ Important: Filesystem MCP Compatibility
+
+**Current Status**: Filesystem MCP should be **disabled** when using Librarian MCP.
+
+#### The Problem
+
+When both Librarian MCP and Filesystem MCP are enabled simultaneously:
+
+1. **Tool Confusion**: Models may hybridize tools from both MCPs unpredictably
+   - Use `read_document()` (librarian) when they should use `Read` (filesystem)
+   - Get confused about sandbox boundaries (LIBRARIAN_SAFE_DIR vs unrestricted access)
+   - Mix semantic search with filesystem search inappropriately
+
+2. **Permission Reset Issue**: **Jan resets MCP permissions when switching models**
+   - You configure Filesystem MCP as **read-only**
+   - Switch to a different model in Jan
+   - **Permissions reset to default (read + write) automatically**
+   - This creates unintended write access risks
+
+3. **Directory Overlap**: Both MCPs configured to same directory
+   - Librarian MCP: `/home/peter/development/librarian-mcp`
+   - Filesystem MCP: Same directory (when enabled)
+   - Models may not understand which MCP to use for which operation
+
+#### Recommended Configuration
+
+**For Single-MCP Setup (Recommended)**:
+- ✅ **Enable**: Librarian MCP only
+- ❌ **Disable**: Filesystem MCP completely
+- **Rationale**: Librarian provides all necessary file access within its secure sandbox
+
+**If You Must Use Both MCPs**:
+1. **Verify permissions after every model switch**
+   - Settings → MCP Servers → Filesystem
+   - Ensure "Read" access only, NO "Write" access
+   - Re-verify after changing models
+
+2. **Use different allowed directories**
+   - Librarian MCP: `/home/peter/development/librarian-mcp`
+   - Filesystem MCP: Different directory (e.g., `/home/peter/` for broader access)
+
+3. **Monitor model behavior closely**
+   - Watch for inappropriate tool usage
+   - Check if model respects sandbox boundaries
+   - Be prepared to disable Filesystem MCP if confusion occurs
+
+#### Future Improvements
+
+Needed: Add explicit tool selection guidelines to System_prompt.md to help models understand:
+- When to use Librarian MCP tools (semantic search, sandboxed access)
+- When to use Filesystem MCP tools (unrestricted read access)
+- How to handle overlapping functionality
+
+**For now: Keep Filesystem MCP disabled to avoid confusion.**
+
+---
+
 ## Troubleshooting
 
 ### Issue: "Library has X documents" but rebuild script says Y documents
@@ -72,6 +131,27 @@ Jan maintains the MCP server connection in memory. When you rebuild the library:
 
 **Solution**: Restart MCP server to pick up updated System_prompt.md
 
+### Issue: Model confused about which file access tool to use
+
+**Cause**: Both Librarian MCP and Filesystem MCP enabled simultaneously
+
+**Symptoms**:
+- Model tries to read files outside LIBRARIAN_SAFE_DIR using `read_document()`
+- Model uses `Read` (filesystem) when it should use semantic search
+- Inconsistent tool usage patterns
+
+**Solution**:
+1. **Disable Filesystem MCP** (recommended)
+   - Settings → MCP Servers → Filesystem → Toggle OFF
+   - Use Librarian MCP exclusively for file access
+
+2. **If both MCPs required**:
+   - Settings → MCP Servers → Filesystem → Permissions → **Read only**
+   - **Re-verify permissions after every model switch** (Jan resets them!)
+   - Use different allowed directories for each MCP
+
+3. **Restart MCP server** after making changes
+
 ---
 
 ## Tips and Best Practices
@@ -79,6 +159,8 @@ Jan maintains the MCP server connection in memory. When you rebuild the library:
 - **Always restart after**: Library rebuilds, System_prompt changes, major documentation updates
 - **New chat per session**: Start a fresh chat after restarting MCP server
 - **Verify count**: Ask "How many documents are in the library?" to confirm fresh data loaded
+- **Keep Filesystem MCP disabled**: Avoids tool confusion and permission reset issues
+- **Re-verify permissions after model changes**: Jan resets MCP permissions when switching models
 
 ---
 
