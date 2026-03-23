@@ -32,7 +32,15 @@
 
 **Estimated time**: 2-3 hours (investigation + fix + testing)
 
-**Status**: Old directory manually deleted, but root cause not fixed yet
+**Status**: ✅ FIXED (commit c541f80)
+
+**Fix implemented**:
+1. MetadataStore now auto-detects and removes old .librarian/metadata/
+2. clear_and_rebuild.sh cleans up both old and new locations
+3. Backup created before removal for safety
+4. Tested and working correctly
+
+**Result**: Only one metadata location exists, stale index issue resolved
 
 ---
 
