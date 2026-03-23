@@ -5,6 +5,35 @@
 
 ---
 
+## ⚠️ Important Notes
+
+### GPU VRAM Conflict: Marker PDF Conversion + MCP Clients
+
+**Issue**: Marker PDF→Markdown conversion uses **~3.44 GB VRAM** on GPU.
+
+**Problem**: If MCP clients (Jan, LM Studio, etc.) are running with local GPU models active, Marker conversion will fail due to insufficient VRAM.
+
+**Solution**: Before running PDF conversion scripts:
+1. **Stop MCP clients** with active GPU models
+2. **Run conversion script** (`./scripts/convert_botany_pdf_to_md.sh`)
+3. **Restart MCP clients** after conversion completes
+
+**Example workflow**:
+```bash
+# Stop Jan/LM Studio (if running with GPU models)
+# Then run conversion:
+./scripts/convert_botany_pdf_to_md.sh
+# Then restart your MCP client
+```
+
+**Affected scripts**:
+- `scripts/convert_botany_pdf_to_md.sh` (uses marker_single)
+- Any script using Marker for PDF conversion
+
+**Note**: This is only an issue with GPU-based local models. Cloud models or CPU-only models won't conflict.
+
+---
+
 ## 🚨 Priority: CRITICAL - Fix Metadata Directory Bug
 
 ### 0. CRITICAL: Duplicate Metadata Directories Causing Stale Index
