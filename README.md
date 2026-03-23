@@ -188,9 +188,9 @@ The Librarian MCP Server turns AI models into research assistants who can:
 ### ✅ Dual Backend Architecture (Phase 2 Complete!)
 
 **Chonkie Backend** (Default):
-- 🧠 **Intelligent semantic chunking** - Respects document structure
+- 🧠 **Intelligent semantic chunking** - SemanticChunker with 512-token chunks
 - 🎯 **Better search results** - Context-aware boundaries
-- 📊 **Enhanced metadata** - Token counts, character counts
+- 📊 **Enhanced metadata** - Token counts, character counts, file types
 - 🚀 **Production-ready** - Battle-tested chunking library
 
 **ChromaDB Backend** (Optional):
@@ -246,8 +246,10 @@ The Librarian MCP Server turns AI models into research assistants who can:
 **Full PDF processing with Chonkie backend:**
 - **Text extraction**: pypdf (fast) with docling fallback (OCR support)
 - **Semantic chunking**: Intelligent splitting based on content coherence
-- **Table handling**: Preserves table structures from PDFs
+- **Table handling**: Basic support (tables linearized during extraction)
 - **Multi-page**: Processes entire PDFs automatically
+
+**💡 Recommended workflow**: For best AI responses, convert PDFs to Markdown using Marker (see `docs/REBUILD_LIBRARY.md`). Markdown files provide better structure preservation and AI models prefer them for citations.
 
 **Supported file types:**
 - **Documents**: `.pdf`, `.docx`, `.md`, `.txt`, `.rst`, `.html`
