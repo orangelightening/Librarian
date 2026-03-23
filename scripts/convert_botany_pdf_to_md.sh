@@ -1,12 +1,12 @@
 #!/bin/bash
-# Convert PDFs to Markdown using pypdf (already installed)
-# Creates structured Markdown with page-by-page organization
+# Convert PDFs to Markdown using Marker (GPU-free, excellent quality)
+# Marker preserves structure, tables, images, links, and formatting
 
 BOTANY_DIR="/home/peter/botany"
 LIBRARIAN_DIR="/home/peter/development/librarian-mcp"
 
 echo "================================"
-echo "Botany Library: PDF → Markdown Conversion"
+echo "Botany Library: PDF → Markdown Conversion (Marker)"
 echo "================================"
 echo ""
 
@@ -47,52 +47,15 @@ for pdf in *.pdf; do
 
         echo "📄 Converting $pdf → $md_file"
 
-        # Use pypdf to convert with proper Markdown structure
-        # CRITICAL: Keep PDF file open while iterating pages
-        python -c "
-import sys
-from pathlib import Path
-
-def pdf_to_markdown(pdf_path, md_path):
-    try:
-        import pypdf
-
-        # Open PDF and keep it open during extraction
-        pdf_file = open(pdf_path, 'rb')
-        pdf_reader = pypdf.PdfReader(pdf_file)
-
-        with open(md_path, 'w', encoding='utf-8') as f:
-            # Document title
-            f.write(f'# {pdf_path.stem}\n\n')
-            f.write(f'**Source:** {pdf_path.name}\n\n')
-            f.write(f'**Pages:** {len(pdf_reader.pages)}\n\n')
-            f.write('---\n\n')
-
-            # Extract each page while PDF is still open
-            for page_num, page in enumerate(pdf_reader.pages, 1):
-                text = page.extract_text()
-                if text and text.strip():
-                    f.write(f'## Page {page_num}\n\n')
-                    f.write(text)
-                    f.write('\n\n')
-
-        # Close PDF file
-        pdf_file.close()
-        return True
-
-    except Exception as e:
-        print(f'    Error: {e}', file=sys.stderr)
-        return False
-
-result = pdf_to_markdown(Path('$pdf'), Path('$md_file'))
-sys.exit(0 if result else 1)
-" 2>&1
+        # Use Marker to convert (preserves structure, tables, images, links)
+        marker "$pdf" -o "$md_file" 2>&1
 
         if [ $? -eq 0 ]; then
             # Verify file was created and has content
             if [ -f "$md_file" ] && [ -s "$md_file" ]; then
                 SIZE=$(wc -c < "$md_file")
-                echo "  ✅ Success ($SIZE bytes)"
+                LINES=$(wc -l < "$md_file")
+                echo "  ✅ Success ($SIZE bytes, $LINES lines)"
                 CONVERTED=$((CONVERTED + 1))
             else
                 echo "  ❌ Failed (file not created or empty)"
@@ -109,22 +72,29 @@ echo ""
 echo "✅ Conversion complete: $CONVERTED succeeded, $FAILED failed"
 echo ""
 
-# Step 2: Remove old .txt files
+# Step 2: Remove old .txt files and backup files
 echo "================================"
-echo "Step 2: Removing old .txt files"
+echo "Step 2: Removing old .txt and backup files"
 echo "================================"
 echo ""
 
 TXT_COUNT=$(ls -1 *.txt 2>/dev/null | wc -l)
-if [ "$TXT_COUNT" -gt 0 ]; then
-    echo "Found $TXT_COUNT .txt files to remove:"
-    ls -1 *.txt | head -10
-    echo ""
-    echo "Deleting..."
-    rm -f *.txt
-    echo "✅ Removed $TXT_COUNT .txt files"
+BACKUP_COUNT=$(ls -1 *1.md 2>/dev/null | wc -l)
+
+if [ "$TXT_COUNT" -gt 0 ] || [ "$BACKUP_COUNT" -gt 0 ]; then
+    if [ "$TXT_COUNT" -gt 0 ]; then
+        echo "Found $TXT_COUNT .txt files to remove"
+        rm -f *.txt
+        echo "✅ Removed .txt files"
+    fi
+
+    if [ "$BACKUP_COUNT" -gt 0 ]; then
+        echo "Found $BACKUP_COUNT backup files (*1.md) to remove"
+        rm -f *1.md
+        echo "✅ Removed backup files"
+    fi
 else
-    echo "No .txt files found (already cleaned?)"
+    echo "No old files found (already cleaned?)"
 fi
 
 echo ""
@@ -145,8 +115,10 @@ echo ""
 echo "📊 Summary:"
 echo "  • PDFs converted: $CONVERTED"
 echo "  • PDFs failed: $FAILED"
-echo "  • .txt files removed: $TXT_COUNT"
+echo "  • Old files removed: $((TXT_COUNT + BACKUP_COUNT))"
 echo "  • Library index rebuilt"
 echo ""
-echo "✅ Botany library now uses Markdown files for better AI responses!"
+echo "✅ Botany library now uses high-quality Markdown from Marker!"
+echo ""
+echo "📝 Note: Marker extracts images as separate files (_page_*_Picture_*.jpeg)"
 echo ""
