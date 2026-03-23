@@ -72,9 +72,31 @@ echo ""
 echo "✅ Conversion complete: $CONVERTED succeeded, $FAILED failed"
 echo ""
 
-# Step 2: Remove old .txt files and backup files
+# Step 2: Organize extracted images
 echo "================================"
-echo "Step 2: Removing old .txt and backup files"
+echo "Step 2: Organizing Extracted Images"
+echo "================================"
+echo ""
+
+# Create images directory in .librarian
+mkdir -p "$BOTANY_DIR/.librarian/images"
+
+# Find and move extracted images
+IMAGE_COUNT=$(ls -1 _page_*_Picture_*.jpeg 2>/dev/null | wc -l)
+if [ "$IMAGE_COUNT" -gt 0 ]; then
+    echo "Found $IMAGE_COUNT extracted images"
+    echo "Moving to .librarian/images/..."
+    mv _page_*_Picture_*.jpeg .librarian/images/ 2>/dev/null
+    echo "✅ Moved $IMAGE_COUNT images to .librarian/images/"
+else
+    echo "No extracted images found"
+fi
+
+echo ""
+
+# Step 3: Remove old .txt files and backup files
+echo "================================"
+echo "Step 3: Removing Old Files"
 echo "================================"
 echo ""
 
@@ -99,9 +121,9 @@ fi
 
 echo ""
 
-# Step 3: Rebuild library index
+# Step 4: Rebuild library index
 echo "================================"
-echo "Step 3: Rebuilding Botany Library Index"
+echo "Step 4: Rebuilding Botany Library Index"
 echo "================================"
 echo ""
 
@@ -115,10 +137,10 @@ echo ""
 echo "📊 Summary:"
 echo "  • PDFs converted: $CONVERTED"
 echo "  • PDFs failed: $FAILED"
+echo "  • Images organized: $IMAGE_COUNT"
 echo "  • Old files removed: $((TXT_COUNT + BACKUP_COUNT))"
 echo "  • Library index rebuilt"
 echo ""
 echo "✅ Botany library now uses high-quality Markdown from Marker!"
-echo ""
-echo "📝 Note: Marker extracts images as separate files (_page_*_Picture_*.jpeg)"
+echo "📁 Images stored in: .librarian/images/"
 echo ""
