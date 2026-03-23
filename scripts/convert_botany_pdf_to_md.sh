@@ -47,8 +47,8 @@ for pdf in *.pdf; do
 
         echo "📄 Converting $pdf → $md_file"
 
-        # Use Marker to convert (preserves structure, tables, images, links)
-        marker "$pdf" -o "$md_file" 2>&1
+        # Use marker_single to convert individual PDF
+        marker_single "$pdf" --output_dir "$BOTANY_DIR" 2>&1
 
         if [ $? -eq 0 ]; then
             # Verify file was created and has content
