@@ -44,9 +44,49 @@
 
 ---
 
+## 🎯 Priority: HIGH - Documentation Consistency
+
+### 1. Fix Documentation Discrepancies Between Three Files
+
+**Problem**: Three key documentation files have inconsistent, incomplete, or contradictory information.
+
+**Files affected**:
+- `docs/MCP_CONFIG_TEMPLATES.md`
+- `docs/REBUILD_LIBRARY.md`
+- `docs/MULTI_LIBRARY_SETUP.md`
+
+**Key gaps identified**:
+1. **PDF conversion workflow**: Only in REBUILD_LIBRARY.md, missing from others
+2. **`.librarianignore` placement**: Only REBUILD_LIBRARY.md shows correct location
+3. **`write_document` security rules**: Only in MULTI_LIBRARY_SETUP.md
+4. **CLI tool coverage**: Only in MULTI_LIBRARY_SETUP.md
+5. **Multi-library architecture**: Only comprehensive in MULTI_LIBRARY_SETUP.md
+6. **Backend switching**: Only in REBUILD_LIBRARY.md
+7. **Path format examples**: Inconsistent across files
+
+**Impact**: Users can't find critical info, get conflicting guidance, miss important features
+
+**Action required**:
+1. **Audit**: Decide which file should be the "source of truth" for each topic
+2. **Consolidate**: Either merge into single comprehensive guide OR clearly separate concerns
+3. **Cross-reference**: Add "See also:" links between related docs
+4. **Examples**: Ensure every tool has usage examples in at least one doc
+5. **Quick reference**: Create unified QUICKSTART.md with common tasks
+
+**Options**:
+- **Option A**: Merge into single comprehensive `USER_GUIDE.md`
+- **Option B**: Keep separate but add cross-references and "See also" sections
+- **Option C**: Create `docs/INDEX.md` as documentation roadmap/map
+
+**Estimated time**: 3-4 hours (audit + consolidation + testing)
+
+**User preference needed**: Which approach - merge or cross-reference?
+
+---
+
 ## 🎯 Priority: HIGH - Documentation Accuracy
 
-### 1. Fix README.md Inaccuracies About Chonkie Implementation
+### 2. Fix README.md Inaccuracies About Chonkie Implementation
 
 **Problem**: README.md makes claims about Chonkie's document-type-aware chunking that aren't accurate.
 
@@ -63,7 +103,7 @@
 
 ---
 
-### 2. Add Architecture Documentation: PDF + Markdown Strategy
+### 3. Add Architecture Documentation: PDF + Markdown Strategy
 
 **Problem**: No explanation of why we use PDF + .md combination or our actual Chonkie implementation.
 
