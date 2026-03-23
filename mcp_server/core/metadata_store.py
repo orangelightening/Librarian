@@ -24,7 +24,42 @@ class MetadataStore:
         self.metadata_path = Path(metadata_path or settings.METADATA_PATH)
         self.metadata_path.mkdir(parents=True, exist_ok=True)
         self.index_file = self.metadata_path / "index.json"
+
+        # Migration: Check for old .librarian/metadata location and warn
+        self._migrate_old_metadata()
+
         self._index = self._load_index()
+
+    def _migrate_old_metadata(self):
+        """Check for and warn about old metadata locations."""
+        from ..config.settings import settings
+
+        # Check for old .librarian/metadata location
+        project_root = settings.PROJECT_ROOT
+        old_metadata_path = project_root / ".librarian" / "metadata"
+
+        if old_metadata_path.exists() and old_metadata_path != self.metadata_path:
+            import shutil
+            print(f"\n⚠️  WARNING: Old metadata directory found at: {old_metadata_path}")
+            print(f"   Current metadata location: {self.metadata_path}")
+            print(f"   This can cause stale index issues!")
+            print(f"\n   Removing old directory to prevent confusion...")
+
+            try:
+                # Back up just in case
+                backup_path = project_root / ".librarian" / "metadata.backup"
+                if backup_path.exists():
+                    shutil.rmtree(backup_path)
+                shutil.copytree(old_metadata_path, backup_path)
+
+                # Remove old directory
+                shutil.rmtree(old_metadata_path)
+                print(f"   ✅ Old metadata directory removed")
+                print(f"   📁 Backup saved to: {backup_path}")
+                print()
+            except Exception as e:
+                print(f"   ❌ Error removing old metadata: {e}")
+                print()
 
     def _load_index(self) -> Dict:
         """Load index from disk."""

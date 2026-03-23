@@ -52,6 +52,18 @@ if [ -d "$PROJECT_ROOT/metadata" ]; then
     rm -rf "$PROJECT_ROOT/metadata"
 fi
 
+# Remove OLD metadata location (legacy .librarian/metadata)
+if [ -d "$PROJECT_ROOT/.librarian/metadata" ]; then
+    echo "Removing old .librarian/metadata (legacy location)..."
+    rm -rf "$PROJECT_ROOT/.librarian/metadata"
+fi
+
+# Also remove old .librarian/chroma_db if it exists
+if [ -d "$PROJECT_ROOT/.librarian/chroma_db" ]; then
+    echo "Removing old .librarian/chroma_db (legacy location)..."
+    rm -rf "$PROJECT_ROOT/.librarian/chroma_db"
+fi
+
 echo "✅ Database cleared"
 echo ""
 

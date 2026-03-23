@@ -5,6 +5,37 @@
 
 ---
 
+## 🚨 Priority: CRITICAL - Fix Metadata Directory Bug
+
+### 0. CRITICAL: Duplicate Metadata Directories Causing Stale Index
+
+**Problem**: TWO metadata directories exist, causing tools to read from old index instead of current index.
+
+**Locations found**:
+- `/home/peter/development/librarian-mcp/metadata/index.json` (55 documents - current, correct)
+- `/home/peter/development/librarian-mcp/.librarian/metadata/index.json` (52 documents - old, stale)
+
+**Symptoms**:
+- User rebuilds index, sees 55 documents in rebuild output
+- Tools (list_indexed_documents) return 52 documents from March 22
+- AI responses cite old/stale information
+- Restarting MCP server doesn't fix it (cached in wrong location)
+
+**Root cause**: MetadataStore somehow reading from `.librarian/metadata/` instead of `metadata/`
+
+**Action required**:
+1. **IMMEDIATE**: Remove old `.librarian/metadata/` directory
+2. **Investigate**: Why does MetadataStore read from wrong location?
+3. **Fix**: Ensure only ONE metadata location exists and is used
+4. **Prevent**: Add migration/cleanup to remove old locations
+5. **Document**: Add to setup/upgrading documentation
+
+**Estimated time**: 2-3 hours (investigation + fix + testing)
+
+**Status**: Old directory manually deleted, but root cause not fixed yet
+
+---
+
 ## 🎯 Priority: HIGH - Documentation Accuracy
 
 ### 1. Fix README.md Inaccuracies About Chonkie Implementation
