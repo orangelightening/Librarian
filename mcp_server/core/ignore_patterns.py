@@ -35,6 +35,7 @@ class IgnorePatterns:
             self.patterns = [
                 "venv/", ".venv/", "virtualenv/",
                 "__pycache__/", "*.pyc", "*.pyo",
+                "__init__.py",  # Skip empty package markers
                 "node_modules/", ".git/",
                 "*.egg-info/", ".eggs/", "dist/", "build/",
                 ".env", "*.env", "credentials.*", "*.key", "*.pem",
@@ -65,6 +66,7 @@ class IgnorePatterns:
             # Fall back to defaults
             self.patterns = [
                 "venv/", ".venv/", "node_modules/", ".git/",
+                "__init__.py",  # Skip empty package markers
                 "*.key", "*.pem", ".env", "credentials.*"
             ]
 
