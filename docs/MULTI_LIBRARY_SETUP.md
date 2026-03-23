@@ -148,6 +148,31 @@ Librarian MCP Server with Chonkie backend supports:
   - Get library statistics
   - Total documents, chunks, storage size
 
+### File Writing (Security Sandbox)
+
+- **`write_document(path, content, create_dirs=True)`**
+  - Write content to the librarian workspace (sandboxed)
+  - **Security**: Writes are restricted to `.librarian/` subdirectory only
+  - **Path Format**: Use simple relative paths
+    - ✅ Good: `'report.md'`, `'sandbox/analysis.md'`, `'reports/fix.py'`
+    - ❌ Bad: `'/home/peter/botany/file.md'`, `'../escape.md'`, `'/.librarian/sandbox/file.md'`
+  - **Examples**:
+    ```python
+    write_document('report.md', '# Analysis\\n\\nFindings...')
+    write_document('sandbox/contradictions.md', 'Detailed analysis...')
+    write_document('reports/fix.py', 'def fix():\\n    pass')
+    ```
+  - **Write Location**: Files are written to `<library>/.librarian/<path>`
+    - Dev library: `/home/peter/development/librarian-mcp/.librarian/sandbox/contradictions.md`
+    - Botany library: `/home/peter/botany/.librarian/reports/analysis.md`
+  - **Security Features**:
+    - Rejects absolute paths
+    - Rejects parent directory references (`..`)
+    - Rejects paths starting with `.`
+    - Rejects system directory patterns (`home/`, `usr/`, etc.)
+    - Limits directory depth (max 3 levels)
+    - Clear error messages before content generation
+
 ### CLI Tools (within safe directory)
 
 - **`execute_command(command, args, cwd)`**

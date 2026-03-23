@@ -8,7 +8,7 @@ from pathlib import Path
 
 # Configuration will be set during registration
 SAFE_WORKING_DIR = None
-LIBRARIAN_WRITE_DIR = "librarian"  # Subdirectory for write operations
+LIBRARIAN_WRITE_DIR = ".librarian"  # Subdirectory for write operations (matches data directory)
 MAX_OUTPUT_CHARS = 8000
 DEFAULT_TIMEOUT_SECONDS = 15
 MAX_WRITE_FILE_SIZE = 100000  # 100KB max for write operations
@@ -407,35 +407,78 @@ def register_cli_tools(mcp, safe_dir: str):
     @mcp.tool()
     def write_document(path: str, content: str, create_dirs: bool = True) -> str:
         """
-        Write content to a file in the librarian workspace subdirectory.
+        Write content to a file in the librarian workspace.
 
         This tool creates a two-way communication channel where the librarian
         can write files (analysis results, code changes, documentation updates)
         that you can review and apply.
 
+        ⚡ QUICK PATH REFERENCE ⚡
+            Just use the filename or subdirectory path:
+            - 'report.md' → writes to librarian workspace
+            - 'reports/analysis.md' → creates reports/ subdirectory automatically
+            - 'sandbox/findings.md' → creates sandbox/ subdirectory automatically
+
+            ❌ DON'T use: '/.librarian/sandbox/file.md' (wrong!)
+            ✅ INSTEAD use: 'sandbox/file.md' or 'file.md' (correct!)
+
         Args:
-            path: File path relative to /librarian/ subdirectory (e.g., 'analysis.md' or 'reports/fix.py')
+            path: File path relative to the librarian workspace (simple format only)
+                   - Good: 'report.md', 'analysis/contradictions.md', 'reports/fix.py'
+                   - Bad: '/.librarian/sandbox/report.md', '../escape.txt', '/absolute/path.md'
             content: File content to write
             create_dirs: Create parent directories if they don't exist (default: True)
 
         Returns:
             Success confirmation with file path and size
 
-        Example:
-            write_document('analysis.md', '# Analysis Results\\n\\nFound 3 issues...')
-            write_document('reports/fix.py', 'def fix_bug():\\n    return "fixed"')
+        Examples:
+            write_document('report.md', '# Analysis\\n\\nFindings...')
+            write_document('analysis/contradictions.md', 'Detailed analysis...')
+            write_document('reports/fix.py', 'def fix():\\n    pass')
+
+        Note: All files are written to the librarian workspace automatically.
+              Use simple relative paths - no leading slashes or dot prefixes needed.
         """
-        # Force path to be within librarian subdirectory
+        # Validate path BEFORE any processing to give clear error early
         if not path:
-            return "[security error]\nPath cannot be empty"
+            return "[error] Path cannot be empty. Please provide a filename like 'report.md' or 'reports/analysis.md'"
+
+        # SECURITY: Early validation to prevent wasting time on invalid paths
+        # Reject paths that look like they're trying to escape or use absolute paths
+        if path.startswith('/') or path.startswith('\\'):
+            return f"[error] Invalid path format. Use relative paths like 'report.md' or 'reports/analysis.md', not '{path}'"
+
+        if '..' in path:
+            return f"[error] Path cannot contain '..' (parent directory reference). Use simple paths like 'report.md', not '{path}'"
 
         # SECURITY: Strip leading/trailing slashes and whitespace
         clean_path = path.strip().strip('/').strip('\\')
 
-        # SECURITY: Reject paths trying to escape librarian workspace
-        # Check if path contains project directory name or parent directory references
-        if '..' in clean_path or 'librarian-mcp' in clean_path.lower():
-            return f"[security error]\nPath contains invalid directory references. Got: '{path}'"
+        # SECURITY: Reject paths starting with dot (except for hidden files like .gitignore)
+        # This prevents the /.librarian escape vulnerability
+        if clean_path.startswith('.'):
+            return f"[error] Path cannot start with '.'. Use simple filenames like 'report.md', not '{path}'"
+
+        # SECURITY: Reject paths trying to reference project directory
+        if 'librarian-mcp' in clean_path.lower():
+            return f"[error] Path contains invalid references. Use simple paths like 'report.md', not '{path}'"
+
+        # SECURITY: Reject complex paths with multiple leading slashes or dots
+        if '//' in path or '/./' in path:
+            return f"[error] Path contains invalid sequences. Use simple paths like 'reports/analysis.md', not '{path}'"
+
+        # SECURITY: Reject paths that look like absolute paths after stripping
+        # Common system directories that shouldn't appear in relative paths
+        system_dirs = ['home', 'usr', 'bin', 'etc', 'var', 'tmp', 'root', 'opt']
+        first_component = clean_path.split('/')[0] if '/' in clean_path else clean_path
+        if first_component.lower() in system_dirs:
+            return f"[error] Path looks like absolute path. Use simple paths like 'report.md' or 'sandbox/file.md', not '{path}'"
+
+        # SECURITY: Limit directory depth to prevent complex path structures
+        depth = clean_path.count('/')
+        if depth > 3:
+            return f"[error] Path too deep (max 3 levels). Use simple paths like 'reports/analysis.md', not '{path}'"
 
         # Always force into librarian/ subdirectory
         normalized_path = f"{LIBRARIAN_WRITE_DIR}/{clean_path}"
@@ -443,7 +486,7 @@ def register_cli_tools(mcp, safe_dir: str):
         # Validate the combined path is safe
         safe, resolved = is_safe_path(normalized_path, SAFE_WORKING_DIR)
         if not safe:
-            return f"[security error]\n{resolved}"
+            return f"[error] Path validation failed. Use simple paths like 'report.md' or 'reports/analysis.md'"
 
         # Additional check: ensure we're in the librarian subdirectory
         resolved_real = os.path.realpath(resolved)
@@ -451,7 +494,7 @@ def register_cli_tools(mcp, safe_dir: str):
         librarian_dir = os.path.join(safe_dir_real, LIBRARIAN_WRITE_DIR)
 
         if not resolved_real.startswith(librarian_dir):
-            return f"[security error]\nWrite operations are only allowed in /{LIBRARIAN_WRITE_DIR}/ subdirectory. Attempted: {resolved}"
+            return f"[error] Write would escape allowed directory. Use simple paths like 'report.md', not '{path}'"
 
         # Check file size limit
         if len(content) > MAX_WRITE_FILE_SIZE:

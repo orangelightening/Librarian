@@ -14,23 +14,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Token-Based Chunking**: 512-token chunks using Chonkie SemanticChunker
 - **User Documentation**: Multi-library setup guide and MCP config templates
 - **Enhanced Metadata**: Source tracking and file type information
+- **Security Enhancements**: Robust path validation for write_document tool
 
 ### Changed
 - **Default Backend**: Chonkie is now the recommended backend (was ChromaDB)
 - **Chunking Quality**: Semantic coherence replaces simple character-based splitting
 - **Document Manager**: Uses `add_document_pipeline()` for file-type-aware processing
 - **PDF Extraction**: pypdf for fast extraction, docling for complex layouts/OCR
+- **Write Directory**: Changed from `librarian/` to `.librarian/` for consistency
 
 ### Fixed
-- **Path Validation**: IgnorePatterns now work with any root directory
+- **Environment Variable Priority**: Environment variables now take precedence over CLI args (fixes LIBRARIAN_SAFE_DIR)
+- **Path Validation**: Enhanced security validation for write_document
+  - Rejects absolute paths: `/home/peter/botany/file.md` → ERROR
+  - Rejects parent directory references: `../escape.md` → ERROR
+  - Rejects dot-prefixed paths: `/.librarian/sandbox/file.md` → ERROR
+  - Rejects system directory patterns: `home/peter/botany` → ERROR
+  - Limits directory depth: max 3 levels
 - **Multi-Library Isolation**: Each library has independent `.librarian/` directory
 - **UUID Generation**: Fixed uuid5() error in Chonkie backend
+
+### Security
+- **Write Sandbox**: write_document now properly restricts writes to `.librarian/` subdirectory
+- **Clear Error Messages**: AI gets helpful feedback before generating content
+- **Path Sanitization**: Multiple layers of validation prevent directory traversal
 
 ### Technical
 - **ChonkieBackend**: New backend using Chonkie's SemanticChunker
 - **Pipeline Processing**: File-type-aware text extraction before chunking
 - **Metadata Store**: Per-library metadata isolation
 - **Ignore Patterns**: Configurable root path for multi-library support
+- **Environment Variable Handling**: Fixed priority order for MCP usage
 
 ## [0.2.1] - Previous Release
 

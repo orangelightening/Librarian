@@ -57,8 +57,8 @@ def parse_arguments():
 
     parser.add_argument(
         '--safe-dir',
-        default=str(Path.home()),
-        help='Allowed directory for CLI operations (default: ~/)'
+        default=None,  # Let environment variable take precedence
+        help='Allowed directory for CLI operations (default: from env or ~/)'
     )
 
     parser.add_argument(
@@ -111,10 +111,11 @@ def main():
     import os
 
     # Support environment variables for configuration
-    safe_dir = args.safe_dir or os.getenv('LIBRARIAN_SAFE_DIR', str(Path.home()))
-    documents_dir = args.documents_dir or os.getenv('LIBRARIAN_DOCUMENTS_DIR')
-    chroma_path = args.chroma_path or os.getenv('LIBRARIAN_CHROMA_PATH')
-    metadata_path = args.metadata_path or os.getenv('LIBRARIAN_METADATA_PATH')
+    # Environment variables take precedence over defaults for MCP usage
+    safe_dir = os.getenv('LIBRARIAN_SAFE_DIR') or args.safe_dir or str(Path.home())
+    documents_dir = os.getenv('LIBRARIAN_DOCUMENTS_DIR') or args.documents_dir
+    chroma_path = os.getenv('LIBRARIAN_CHROMA_PATH') or args.chroma_path
+    metadata_path = os.getenv('LIBRARIAN_METADATA_PATH') or args.metadata_path
 
     # Transport configuration
     transport = os.getenv('LIBRARIAN_TRANSPORT', args.transport)
