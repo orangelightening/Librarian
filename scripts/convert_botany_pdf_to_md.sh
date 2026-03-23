@@ -43,18 +43,33 @@ FAILED=0
 for pdf in *.pdf; do
     if [ -f "$pdf" ]; then
         name="${pdf%.pdf}"
-        md_file="${name}.md"
 
-        echo "📄 Converting $pdf → $md_file"
+        echo "📄 Converting $pdf"
 
-        # Use marker_single to convert individual PDF
-        marker_single "$pdf" --output_dir "$BOTANY_DIR" 2>&1
+        # Use marker_single to convert (creates subdirectory)
+        marker_single "$pdf" --output_dir "$BOTANY_DIR" 2>&1 | grep -E "(Saved|Error|Total time)" || true
 
-        if [ $? -eq 0 ]; then
+        # Marker creates a subdirectory, move the .md file out
+        if [ -f "$name/$name.md" ]; then
+            # Remove old .md if exists
+            [ -f "$name.md" ] && rm -f "$name.md"
+
+            # Move new .md file to parent
+            mv "$name/$name.md" "$name.md"
+
+            # Move images to .librarian/images/
+            if [ -d "$name" ] && [ "$(ls -A $name)" ]; then
+                mkdir -p "$BOTANY_DIR/.librarian/images"
+                mv "$name"/_page_*.jpeg .librarian/images/ 2>/dev/null || true
+            fi
+
+            # Remove subdirectory
+            rm -rf "$name"
+
             # Verify file was created and has content
-            if [ -f "$md_file" ] && [ -s "$md_file" ]; then
-                SIZE=$(wc -c < "$md_file")
-                LINES=$(wc -l < "$md_file")
+            if [ -f "$name.md" ] && [ -s "$name.md" ]; then
+                SIZE=$(wc -c < "$name.md")
+                LINES=$(wc -l < "$name.md")
                 echo "  ✅ Success ($SIZE bytes, $LINES lines)"
                 CONVERTED=$((CONVERTED + 1))
             else
@@ -72,7 +87,7 @@ echo ""
 echo "✅ Conversion complete: $CONVERTED succeeded, $FAILED failed"
 echo ""
 
-# Step 2: Organize extracted images
+# Step 2: Organize extracted images (cleanup any remaining)
 echo "================================"
 echo "Step 2: Organizing Extracted Images"
 echo "================================"
