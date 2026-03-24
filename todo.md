@@ -317,3 +317,59 @@
 - User satisfied with current quality despite not using Chonkie's specialized chunkers
 
 **Key principle**: Be honest about implementation, don't overclaim capabilities.
+
+---
+
+## 🎯 Priority: HIGH - Improve PDF Search Quality
+
+### Problem: PDFs Get Lower Relevance Scores Than Markdown
+
+**Discovery**: PDF relevance scores: ~2.7-2.9 vs Markdown: ~4.0+
+
+**Root cause**: NOT PDFs inherently inferior, but **pypdf extraction** produces poor chunks vs **Marker extraction**.
+
+**Why Marker chunks are better**:
+- ✅ Preserves structure, headers, formatting
+- ✅ Removes PDF artifacts (page breaks, footers, headers)
+- ✅ Better chunk coherence (complete ideas vs fragmented)
+- ✅ Cleaner text flow → better embeddings
+
+**Current pipeline**:
+```
+PDF → [pypdf] → Raw text → Chunking → Embedding → Search (Low quality)
+MD → [Marker] → Structured MD → Chunking → Embedding → Search (High quality)
+```
+
+**Proposed solution**: Use Marker for PDF extraction in chunking pipeline.
+
+**Implementation options**:
+
+**Option 1: Replace PDF converter in pipeline**
+- Configure `chonkie_backend.py` to use Marker for PDF extraction
+- Re-index all PDFs with new converter
+- Result: PDFs match Markdown quality
+
+**Option 2: Hybrid (Recommended)**
+- Use Marker for all PDF processing
+- Re-run existing PDFs through Marker
+- Consider removing original PDFs from index after verification
+- Result: Clean library, consistent high quality
+
+**Option 3: Validation first**
+- Test sample PDFs with Marker extraction
+- Compare relevance scores
+- Verify chunk coherence
+- Then full re-index
+
+**Expected improvements**:
+- PDF relevance scores: 2.7-2.9 → 4.0+ (matching MD)
+- Consistent quality across all documents
+- Better search accuracy
+- Cleaner data pipeline
+
+**Connection to earlier Chonkie discussion**: This is why we should use Marker instead of pypdf for extraction, even if we don't use Chonkie's specialized chunkers.
+
+**Estimated time**: 4-6 hours (implementation + testing + re-indexing)
+
+**Status**: Ready to implement when user returns from beach.
+
