@@ -21,7 +21,8 @@
 **Target Architecture**:
 - All documents (binaries + code) → shadow library
 - Single ChromaDB with library identifiers
-- One HTTP server per library (ports 8888, 8889, etc.)
+- **Single HTTP server** (port 8888) with library parameter support
+- **Dynamic library discovery** (add libraries via YAML config, no code change)
 - Marker for PDF→MD conversion
 - Orthogonal design (no exceptions, consistent handling)
 
@@ -64,16 +65,18 @@
 
 ### HTTP Configuration
 
-**Server startup** (per library):
+**Server startup** (CURRENT implementation - per library):
 ```bash
 #!/bin/bash
-# start_http_botany.sh
+# start_http_botany.sh (CURRENT APPROACH)
 export LIBRARIAN_TRANSPORT=http
 export LIBRARIAN_PORT=8888
 export LIBRARIAN_CHROMA_PATH=/home/peter/botany/.librarian/chroma_db
 export LIBRARIAN_SAFE_DIR=/home/peter/botany
 # ... start server
 ```
+
+**Note**: This is the CURRENT working setup. Phase 4 will consolidate to single server.
 
 **Client config** (Jan/LM Studio):
 ```json
@@ -137,12 +140,19 @@ export LIBRARIAN_SAFE_DIR=/home/peter/botany
                     │
                     ↓
 ┌──────────────────────────────────────────────────────┐
-│          MCP Servers (One per library)               │
-│  Botany:       http://192.168.3.67:8888/mcp         │
-│  Librarian-mcp: http://192.168.3.67:8889/mcp         │
-│  Cooking:      http://192.168.3.67:8890/mcp         │
+│         Single MCP Server (port 8888)                │
+│  http://192.168.3.67:8888/mcp                        │
 │                                                      │
-│  Each server reads from shadow library + ChromaDB    │
+│  Tools with library parameter:                       │
+│  - search_library(query, library="botany")           │
+│  - search_library(query, library="dev")              │
+│  - search_library(query, library=None)  # all        │
+│  - sync_library(library="botany")                    │
+│                                                      │
+│  Dynamic library discovery:                          │
+│  - list_libraries() → ["botany", "dev", "cooking"]   │
+│  - Add libraries via YAML config (no code change)    │
+│  - Single ChromaDB with library identifiers          │
 └──────────────────────────────────────────────────────┘
 ```
 
@@ -174,6 +184,387 @@ export LIBRARIAN_SAFE_DIR=/home/peter/botany
 
 ---
 
+## Document Ingestion Pipeline
+
+**This is the core of Phase 4 - the complete flow from source documents to searchable ChromaDB.**
+
+### Pipeline Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   DOCUMENT INGESTION PIPELINE                │
+└─────────────────────────────────────────────────────────────┘
+
+Input: Source files
+  (/home/peter/botany/, /home/peter/development/, etc.)
+        │
+        ├─→ Binary files (PDF, DOCX, PPT, PPTX)
+        │   │
+        │   └─→ STAGE 1: Marker Conversion
+        │       │
+        │       ├─→ Tool: marker_single (CLI)
+        │       ├─→ Flags:
+        │       │   └─→ --ocr-rendered  (OCR for rendered text)
+        │       │   └─→ --ocr-pdf       (OCR for PDF text layer)
+        │       │   └─→ --extract-images (Extract images)
+        │       │   └─→ --output_dir    (Output location)
+        │       │
+        │       ├─→ Output: Clean markdown
+        │       │   └─→ Preserves structure, headers, tables
+        │       │   └─→ Removes most PDF artifacts
+        │       │   └─→ Extracts images to separate directory
+        │       │
+        │       ├─→ STAGE 1.5: Artifact Cleanup
+        │       │   │
+        │       │   ├─→ Tool: Regex-based cleanup
+        │       │   ├─→ Removes:
+        │       │   │   └─→ Page number references (e.g., "[Page 42]")
+        │       │   │   └─→ Broken image links (e.g., "![](image.png)")
+        │       │   │   └─→ Marker metadata comments
+        │       │   │   └─→ Excessive whitespace (collapsed to single)
+        │       │   │   └─→ PDF headers/footers if present
+        │       │   │
+        │       │   └─→ Output: Clean, artifact-free markdown
+        │       │
+        │       └─→ Save to shadow library
+        │           └─→ /home/peter/library_shadows/{library}/
+        │           └─→ Update document_mappings.json
+        │
+        ├─→ Code files (.py, .js, .ts, .go, .rs, etc.)
+        │   │
+        │   └─→ STAGE 1: Copy to Shadow
+        │       │
+        │       ├─→ Checksum-based change detection
+        │       │   └─→ Calculate MD5 of source file
+        │       │   └─→ Compare with document_mappings.json
+        │       │   └─→ Skip if unchanged
+        │       │
+        │       └─→ Copy to shadow library
+        │           └─→ /home/peter/library_shadows/{library}/
+        │           └─→ Preserve original filename
+        │           └─→ Update document_mappings.json
+        │
+        └─→ Text/Markdown files (.md, .txt, .rst, etc.)
+            │
+            └─→ STAGE 1: Copy to Shadow
+                │
+                ├─→ Checksum-based change detection
+                │
+                └─→ Copy to shadow library
+                    └─→ /home/peter/library_shadows/{library}/
+                    └─→ Update document_mappings.json
+
+Shadow Library (/home/peter/library_shadows/)
+        │
+        └─→ STAGE 2: Chonkie Specialized Chunking
+            │
+            ├─→ Markdown files (.md)
+            │   │
+            │   ├─→ Tool: chonkie.MarkdownChunker
+            │   ├─→ Config:
+            │   │   └─→ chunk_size=512
+            │   │   └─→ overlap=50
+            │   │   └─→ min_characters=100
+            │   │
+            │   ├─→ Features:
+            │   │   └─→ Header-aware chunking (preserves ## headers)
+            │   │   └─→ Code block detection
+            │   │   └─→ List preservation
+            │   │   └─→ Table structure awareness
+            │   │
+            │   └─→ Output: Structured chunks with MD formatting
+            │
+            ├─→ Code files (.py, .js, .ts, .go, .rs, etc.)
+            │   │
+            │   ├─→ Tool: chonkie.CodeChunker
+            │   ├─→ Config:
+            │   │   └─→ chunk_size=512
+            │   │   └─→ respect_function_boundaries=True
+            │   │   └─→ respect_class_boundaries=True
+            │   │
+            │   ├─→ Features:
+            │   │   └─→ Function-aware chunking
+            │   │   └─→ Class-aware chunking
+            │   │   └─→ Import statement handling
+            │   │   └─→ Comment preservation
+            │   │
+            │   └─→ Output: Code-aware chunks with structure
+            │
+            └─→ Other files (fallback)
+                │
+                ├─→ Tool: chonkie.SemanticChunker
+                ├─→ Config:
+                │   └─→ chunk_size=512
+                │   └─→ similarity_threshold=0.5
+                │   └───min_characters=100
+                │
+                ├─→ Features:
+                │   └─→ Semantic boundary detection
+                │   └─→ Sentence boundary preservation
+                │   └─→ Paragraph awareness
+                │
+                └─→ Output: Semantic chunks
+
+All Chunks (from all chunkers)
+        │
+        └─→ STAGE 3: Embedding Generation
+            │
+            ├─→ Model: minishlab/potion-base-32M
+            │   └─→ 32M parameter embedding model
+            │   └─→ 384-dimensional vectors
+            │   └─→ Optimized for semantic search
+            │
+            ├─→ Method: Sentence embeddings
+            │   └─→ One embedding per chunk
+            │   └─→ Captures semantic meaning
+            │   └─→ Fast inference (~100ms per chunk)
+            │
+            └─→ Output: Embedded chunks with vectors
+
+ChromaDB (/home/peter/library_shadows/chromadb/)
+        │
+        └─→ STAGE 4: Vector Storage
+            │
+            ├─→ Collection: librarian_documents
+            │   └─→ Single collection for all libraries
+            │
+            ├─→ Metadata per chunk:
+            │   ├─→ library_id: "botany" / "dev" / "cooking"
+            │   ├─→ source_file: "Plum.md" / "cli_tools.py"
+            │   ├─→ chunk_type: "markdown" / "code" / "semantic"
+            │   ├─→ checksum: "abc123..." (for change detection)
+            │   ├─→ chunk_index: 0, 1, 2, ... (chunk position)
+            │   └─→ timestamp: "2026-03-25T10:30:00"
+            │
+            ├─→ Index: HNSW (Hierarchical Navigable Small World)
+            │   └─→ Approximate nearest neighbor search
+            │   └─→ Fast: ~10ms per query
+            │   └─→ Scalable: millions of chunks
+            │
+            └─→ Query: search_library(query, library, limit)
+                └─→ Returns: ranked chunks with similarity scores
+```
+
+### Pipeline Stages in Detail
+
+**Stage 1: Document Fetch & Conversion**
+- **Input**: Source files from various locations
+- **Binary files**: Marker conversion with full features
+- **Code/Text files**: Direct copy with checksum validation
+- **Output**: Clean markdown/text files in shadow library
+- **Tracking**: document_mappings.json tracks all conversions
+
+**Stage 2: Specialized Chunking**
+- **Markdown files**: MarkdownChunker (structure-aware)
+- **Code files**: CodeChunker (function/class-aware)
+- **Other files**: SemanticChunker (semantic boundaries)
+- **Output**: High-quality chunks optimized for each file type
+
+**Stage 3: Embedding Generation**
+- **Model**: potion-base-32M (32M params, 384-dim vectors)
+- **Method**: Sentence embeddings per chunk
+- **Speed**: ~100 chunks/second on CPU
+- **Output**: Vector representations of chunks
+
+**Stage 4: Vector Storage**
+- **Database**: ChromaDB with HNSW index
+- **Metadata**: Library IDs, file types, checksums
+- **Query**: Semantic search with library filtering
+- **Performance**: ~10ms per query
+
+### Error Handling & Warnings
+
+**Marker Conversion Failures**:
+```python
+if marker_conversion_fails:
+    logger.critical("""
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║ CRITICAL: MARKER PDF CONVERSION FAILED                       ║
+    ╠═══════════════════════════════════════════════════════════════╣
+    ║ File: {pdf_path}                                            ║
+    ║ Error: {error_message}                                      ║
+    ║                                                               ║
+    ║ IMPACT:                                                      ║
+    ║   • Marker produces 4.0+ relevance scores                   ║
+    ║   • pypdf fallback produces 2.7-2.9 scores (35% worse)      ║
+    ║   • This affects ENTIRE LIBRARY quality                      ║
+    ║                                                               ║
+    ║ RECOMMENDED ACTION:                                          ║
+    ║   1. Stop conversion                                         ║
+    ║   2. Fix Marker installation (GPU, dependencies)            ║
+    ║   3. Verify Marker works: marker_single test.pdf             ║
+    ║   4. Retry conversion                                       ║
+    ║                                                               ║
+    ║ FALLBACK OPTIONS:                                            ║
+    ║   • pypdf: NOT RECOMMENDED (quality degradation)            ║
+    ║   • Skip file: Use --skip-on-fail                           ║
+    ║   • Abort: Use --abort-on-fail (default)                    ║
+    ║                                                               ║
+    ║ To force pypdf despite warnings: --force-pypdf               ║
+    ╚═══════════════════════════════════════════════════════════════╝
+    """)
+
+    if not force_pypdf:
+        raise ConversionError("Marker conversion required. Aborting.")
+```
+
+**VRAM Safety Checks**:
+```python
+def check_vram_available(required_gb=5):
+    """
+    Check if enough VRAM is available for Marker conversion.
+    Marker recommends 5GB free VRAM (uses ~3.5GB).
+
+    Args:
+        required_gb: Minimum required VRAM in GB
+
+    Returns:
+        True if safe, False otherwise
+    """
+    try:
+        import torch
+        if not torch.cuda.is_available():
+            return True  # CPU mode, no VRAM constraint
+
+        total_vram = torch.cuda.get_device_properties(0).total_memory / 1024**3
+        used_vram = torch.cuda.memory_allocated(0) / 1024**3
+        available_vram = total_vram - used_vram
+
+        if available_vram >= required_gb:
+            return True
+        else:
+            logger.warning(f"""
+            ╔═══════════════════════════════════════════════════════════════╗
+            ║ WARNING: INSUFFICIENT VRAM FOR MARKER CONVERSION           ║
+            ╠═══════════════════════════════════════════════════════════════╣
+            ║ Required: {required_gb}GB (Marker recommendation)           ║
+            ║ Available: {available_vram:.1f}GB                           ║
+            ║ Total: {total_vram:.1f}GB | Used: {used_vram:.1f}GB        ║
+            ║                                                               ║
+            ║ Options:                                                     ║
+            ║   1. Close other GPU applications (LM Studio, etc.)        ║
+            ║   2. Use CPU mode (slower, ~30s per PDF)                   ║
+            ║   3. Upgrade GPU (16-24GB VRAM recommended)                ║
+            ╚═══════════════════════════════════════════════════════════════╝
+            """)
+            return False
+
+    except Exception as e:
+        logger.error(f"Cannot check VRAM: {e}")
+        return False  # Conservative: assume not enough
+```
+
+**Checksum Validation**:
+```python
+def copy_to_shadow(source_file, shadow_path, mappings):
+    """Copy file to shadow with checksum-based change detection."""
+    filename = source_file.name
+
+    # Calculate current checksum
+    with open(source_file, 'rb') as f:
+        current_checksum = hashlib.md5(f.read()).hexdigest()
+
+    # Check if file already exists and is unchanged
+    if filename in mappings:
+        if mappings[filename]['checksum'] == current_checksum:
+            logger.debug(f"Skipping {filename} (unchanged)")
+            return False  # Unchanged, don't copy
+
+    # Copy file
+    shutil.copy2(source_file, shadow_path / filename)
+
+    # Update mappings
+    mappings[filename] = {
+        "original_path": str(source_file),
+        "original_name": source_file.name,
+        "checksum": current_checksum,
+        "copied_at": datetime.now().isoformat(),
+        "size_bytes": source_file.stat().st_size,
+        "type": "copy"
+    }
+
+    save_document_mappings(shadow_path, mappings)
+    return True  # Copied
+```
+
+**Artifact Cleanup**:
+```python
+import re
+
+def cleanup_marker_markdown(markdown_content: str) -> str:
+    """
+    Remove artifacts left by Marker conversion before chunking.
+
+    Removes:
+    - Page number references ([Page 42], [Pg. 15], etc.)
+    - Broken image links (![](image.png), ![](_page_42.jpeg))
+    - Marker metadata comments (<!-- Converted by Marker -->)
+    - Excessive whitespace (collapsed to single)
+    - PDF headers/footers if present
+
+    Args:
+        markdown_content: Raw markdown from Marker
+
+    Returns:
+        Clean markdown ready for chunking
+    """
+    # Remove page number references
+    markdown_content = re.sub(r'\[Page \d+\]', '', markdown_content)
+    markdown_content = re.sub(r'\[Pg\.?\s*\d+\]', '', markdown_content)
+    markdown_content = re.sub(r'\[P\.?\s*\d+\]', '', markdown_content)
+
+    # Remove broken image links (images extracted separately)
+    markdown_content = re.sub(r'!\[\]\([^)]+\)', '', markdown_content)
+    markdown_content = re.sub(r'!\[\]\([^)]*\.png[^)]*\)', '', markdown_content)
+    markdown_content = re.sub(r'!\[\]\([^)]*\.jpeg[^)]*\)', '', markdown_content)
+    markdown_content = re.sub(r'!\[\]\([^)]*\.jpg[^)]*\)', '', markdown_content)
+
+    # Remove Marker metadata comments
+    markdown_content = re.sub(r'<!--.*?Converted by Marker.*?-->', '', markdown_content)
+    markdown_content = re.sub(r'<!--.*?Marker v\d+\.\d+.*?-->', '', markdown_content)
+
+    # Remove PDF headers/footers (common patterns)
+    markdown_content = re.sub(r'^\s*Confidential\s*$', '', markdown_content, flags=re.MULTILINE)
+    markdown_content = re.sub(r'^\s*Draft\s*$', '', markdown_content, flags=re.MULTILINE)
+    markdown_content = re.sub(r'^\s*Page \d+ of \d+\s*$', '', markdown_content, flags=re.MULTILINE)
+
+    # Collapse excessive whitespace
+    markdown_content = re.sub(r'\n{3,}', '\n\n', markdown_content)  # 3+ newlines → 2
+    markdown_content = re.sub(r' {2,}', ' ', markdown_content)     # 2+ spaces → 1
+
+    # Clean up leading/trailing whitespace
+    lines = markdown_content.split('\n')
+    lines = [line.strip() for line in lines]
+    markdown_content = '\n'.join(lines)
+
+    # Remove empty lines at start/end
+    markdown_content = markdown_content.strip()
+
+    return markdown_content
+```
+
+### Quality Metrics
+
+**Expected Relevance Scores**:
+- Marker-converted PDFs: 4.0+ (excellent)
+- pypdf-converted PDFs: 2.7-2.9 (poor, not recommended)
+- Markdown files: 4.0+ (excellent)
+- Code files: 3.8-4.2 (excellent with CodeChunker)
+
+**Conversion Quality**:
+- Marker: Preserves structure, tables, headers, formatting
+- Chonkie MarkdownChunker: Header-aware, code block detection
+- Chonkie CodeChunker: Function-aware, class-aware
+- Chonkie SemanticChunker: Semantic boundary detection
+
+**Performance**:
+- Marker conversion: ~10-30 seconds per PDF (GPU), ~30-60s (CPU)
+- Chonkie chunking: ~100-500 chunks/second
+- Embedding generation: ~100 chunks/second
+- ChromaDB query: ~10ms per search
+
+---
+
 ## Implementation Phases
 
 ### Phase 1: Core Marker Extraction (Foundation)
@@ -192,7 +583,13 @@ export LIBRARIAN_SAFE_DIR=/home/peter/botany
    - Tracks conversions: original_path, checksum, type, timestamp
    - Collision detection and resolution
 
-3. **VRAM safety checks**
+3. **Artifact cleanup system**
+   - Regex-based cleanup of Marker output
+   - Removes: page refs, broken image links, metadata comments
+   - Cleans: excessive whitespace, PDF headers/footers
+   - Produces clean markdown before chunking
+
+4. **VRAM safety checks**
    - Check available GPU memory before conversion
    - Warn if < 5GB free (Marker recommendation, uses ~3.5GB)
    - Graceful fallback to CPU mode
@@ -200,13 +597,15 @@ export LIBRARIAN_SAFE_DIR=/home/peter/botany
 **Deliverables**:
 - `mcp_server/core/marker_extractor.py` (new)
 - `mcp_server/core/document_mappings.py` (new)
+- `mcp_server/core/artifact_cleanup.py` (new)
 - Updated `mcp_server/core/document_manager.py`
 
 **Testing**:
 - Convert sample PDFs from botany library
-- Verify .md quality
+- Verify .md quality (check for artifact removal)
 - Check VRAM usage
 - Test checksum-based change detection
+- Verify regex cleanup removes all artifacts
 
 **Estimated time**: 6-8 hours
 
@@ -363,8 +762,8 @@ export LIBRARIAN_SAFE_DIR=/home/peter/botany
   - [ ] Create troubleshooting guide
 
 - [ ] **Error handling**
-  - [ ] Graceful handling of Marker failures
-  - [ ] Fallback to pypdf if Marker unavailable
+  - [ ] Critical warnings on Marker failures (no silent fallback)
+  - [ ] Abort on Marker failure (require explicit --force-pypdf to override)
   - [ ] Better error messages for sync failures
   - [ ] Logging for debugging
 
