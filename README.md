@@ -1,5 +1,27 @@
 # Librarian MCP Server
 
+## ⚠️ IMPORTANT: Upcoming Architecture Change
+
+**This repository is undergoing a major architecture transition.**
+
+**Current status**: HTTP transport working, multi-library support in development
+**Next phase**: Shadow library + Marker integration (see [phase4_plan.md](phase4_plan.md))
+
+**What's changing**:
+- ✅ HTTP transport (completed)
+- ✅ Remote access (completed)
+- ⏳ Shadow library architecture (in progress)
+- ⏳ Marker PDF→MD conversion (planned)
+- ⏳ Single ChromaDB multi-library (planned)
+
+**Impact**: If you clone this repo, you're getting development code that is mid-architecture change. Things may break, configs may change, documentation may be incomplete.
+
+**Stable release**: v0.3.0 is current stable version. v1.0 (with Phase 4 changes) is in development.
+
+**Proceed with caution**: Test thoroughly before using in production. Back up your data. Watch [phase4_plan.md](phase4_plan.md) for progress.
+
+---
+
 **Transform Jan, LM Studio, or Claude Desktop into an intelligent research assistant that doesn't just search your documents - it discusses them with you and actively helps you understand, analyze, and improve them.**
 
 Imagine having a senior analyst who:
